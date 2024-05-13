@@ -1,0 +1,42 @@
+# Dependencies — reinstalled inside the image
+node_modules
+frontend/node_modules
+backend/node_modules
+
+# Test output & coverage
+coverage
+backend/coverage
+frontend/coverage
+
+# Build artifacts
+dist
+build
+frontend/dist
+
+# Version control — not needed in Docker image
+.git
+.gitignore
+
+# Editor & OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# Test & dev config
+*.test.js
+**/__tests__
+.env.test
+backend/.env.test
+jest.config.json
+backend/jest.config.json
+frontend/vitest.config.js
+
+# Docker meta
+Dockerfile
+.dockerignore
