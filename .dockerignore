@@ -13,8 +13,7 @@ dist
 build
 frontend/dist
 
-# Version control — not needed in Docker image
-.git
+# Version control
 .gitignore
 
 # Editor & OS
