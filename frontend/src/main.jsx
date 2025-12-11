@@ -3,8 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import './styles/global.css';
 import { AuthProvider } from './context/AuthContext';
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
+import AuthPage from "./pages/auth/AuthPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ProjectsListPage from "./pages/projects/ProjectsListPage";
 import AddProjectPage from "./pages/projects/AddProjectPage";
@@ -34,8 +33,9 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <Routes>
         {/* Public Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage />} />
+        <Route path="/auth" element={<AuthPage />} />
         
         {/* Protected Routes with Layout */}
         <Route 
