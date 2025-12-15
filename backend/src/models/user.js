@@ -8,6 +8,9 @@ const userSchema = new mongoose.Schema({
   currency: { type: String, default: 'INR' },
   avatarUrl: { type: String },
   profilePicture: { type: String }, // Base64 encoded image or URL
+  firebaseUid: { type: String }, // Firebase UID for OAuth users
+  authProvider: { type: String, enum: ['email', 'google', 'github'], default: 'email' }, // Auth provider
+  profilePhoto: { type: String }, // Profile photo URL from OAuth
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

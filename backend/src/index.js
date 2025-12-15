@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const admin = require('firebase-admin');
 
 const config = require('./config/config.js');
 const port = config.port;
@@ -20,6 +21,19 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
+
+// Initialize Firebase Admin
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized');
+  } catch (error) {
+    console.error('❌ Firebase Admin initialization failed:', error.message);
+  }
+}
 
 const app = express();
 // 1. connect to DB

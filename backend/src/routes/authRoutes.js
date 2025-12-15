@@ -2,6 +2,7 @@ const express = require("express");
 const {body} = require("express-validator");
 const router = express.Router();
 const { signup, login, getMe, updateProfile, updatePassword } = require('../controllers/authController');
+const { firebaseAuth } = require('../controllers/firebaseAuthController');
 
 const { protect } = require('../middleware/authMiddleware');
 
@@ -28,6 +29,9 @@ router.post(
   ],
   login
 );
+
+// Firebase OAuth route
+router.post('/firebase', firebaseAuth);
 
 // Get current user
 router.get('/me', protect, getMe); 
