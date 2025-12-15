@@ -65,23 +65,47 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   margin-bottom: 20px;
 }
 
 .form__icon {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
-  opacity: 0.5;
-  transition: 0.15s;
-  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .form__icon:hover {
   opacity: 1;
   transform: scale(1.1);
   transition: 0.15s;
+}
+
+.form__icon-btn {
+  width: 45px;
+  height: 45px;
+  background-color: #ecf0f3;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: 3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff;
+  transition: all 0.3s ease;
+  color: #a0a5a8;
+}
+
+.form__icon-btn:hover {
+  box-shadow: 2px 2px 4px #d1d9e6, -2px -2px 4px #ffffff;
+  transform: translateY(-2px);
+}
+
+.form__icon-btn:active {
+  box-shadow: inset 2px 2px 4px #d1d9e6, inset -2px -2px 4px #ffffff;
+  transform: translateY(0);
 }
 
 .form__input {
