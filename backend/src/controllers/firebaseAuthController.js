@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 // Initialize Firebase Admin (you'll need to set this up)
 // This will be initialized in the main server file
@@ -9,25 +10,48 @@ exports.firebaseAuth = async (req, res) => {
   try {
     const { idToken, provider, fullName, email, photoURL } = req.body;
 
+    console.log('🔥 Firebase auth request received:', { provider, email });
+
     // Verify the Firebase ID token
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+      console.log('✅ Token verified, Firebase UID:', decodedToken.uid);
+    } catch (verifyError) {
+      console.error('❌ Token verification failed:', verifyError.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid Firebase token',
+        message: verifyError.message
+      });
+    }
+
     const firebaseUid = decodedToken.uid;
 
     // Check if user exists
     let user = await User.findOne({ email });
 
     if (!user) {
+      console.log('Creating new user:', email);
+      
+      // Generate a random password hash for OAuth users
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      
       // Create new user
       user = new User({
         fullName,
         email,
+        passwordHash: hashedPassword,
         firebaseUid,
         authProvider: provider,
         profilePhoto: photoURL,
-        password: Math.random().toString(36).slice(-10) // Random password for OAuth users
       });
       await user.save();
+      console.log('✅ New user created:', user._id);
     } else {
+      console.log('Existing user found:', user._id);
+      
       // Update existing user with Firebase UID if not already set
       if (!user.firebaseUid) {
         user.firebaseUid = firebaseUid;
@@ -36,6 +60,7 @@ exports.firebaseAuth = async (req, res) => {
           user.profilePhoto = photoURL;
         }
         await user.save();
+        console.log('✅ User updated with Firebase UID');
       }
     }
 
@@ -48,6 +73,8 @@ exports.firebaseAuth = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
+
+    console.log('✅ JWT token created for user:', user.email);
 
     res.status(200).json({
       success: true,
@@ -62,8 +89,8 @@ exports.firebaseAuth = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Firebase auth error:', error);
-    res.status(401).json({
+    console.error('❌ Firebase auth error:', error);
+    res.status(500).json({
       success: false,
       error: 'Authentication failed',
       message: error.message

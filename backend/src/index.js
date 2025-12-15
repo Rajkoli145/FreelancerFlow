@@ -26,13 +26,30 @@ const errorHandler = require('./middleware/errorMiddleware');
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    if (!serviceAccount.private_key) {
+      throw new Error('private_key missing in FIREBASE_SERVICE_ACCOUNT');
+    }
+    // Log first 30 chars of private_key for debug (safe)
+    console.log('Firebase private_key starts with:', serviceAccount.private_key.substring(0, 30));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
     console.log('✅ Firebase Admin initialized');
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error.message);
+    console.error('❌ Firebase Admin initialization failed:', error);
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      try {
+        const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        console.log('FIREBASE_SERVICE_ACCOUNT parsed, private_key length:', parsed.private_key ? parsed.private_key.length : 'none');
+      } catch (e) {
+        console.error('FIREBASE_SERVICE_ACCOUNT JSON parse error:', e);
+      }
+    } else {
+      console.error('FIREBASE_SERVICE_ACCOUNT is undefined');
+    }
   }
+} else {
+  console.error('FIREBASE_SERVICE_ACCOUNT is not set in environment');
 }
 
 const app = express();
