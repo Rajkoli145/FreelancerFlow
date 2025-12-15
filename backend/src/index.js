@@ -29,7 +29,11 @@ connectDB();
 app.use(helmet());
 
 // CORS - whitelist only trusted origins
-const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ['http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:5174',
+  'https://freelancer-flow-seven.vercel.app'
+];
 app.use(cors({ 
   origin: allowedOrigins,
   credentials: true,
