@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   defaultHourlyRate: { type: Number, default: 0 },
   currency: { type: String, default: 'INR' },
   avatarUrl: { type: String },
+  profilePicture: { type: String }, // Base64 encoded image or URL
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

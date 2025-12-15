@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, DollarSign, Clock, Calendar, Eye } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Select from "../../components/ui/Select";
+import Loader from "../../components/ui/Loader";
+import { getPayments } from "../../api/paymentApi";
 
 const PaymentsPage = () => {
   const navigate = useNavigate();
@@ -11,87 +13,65 @@ const PaymentsPage = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [status, setStatus] = useState("");
+  
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const stats = {
-    totalReceived: 45800,
-    pendingAmount: 12600,
-    lastPaymentDate: "Dec 10, 2025",
+  useEffect(() => {
+    fetchPayments();
+  }, [dateFrom, dateTo, paymentMethod]);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filters = {};
+      if (dateFrom) filters.startDate = dateFrom;
+      if (dateTo) filters.endDate = dateTo;
+      if (paymentMethod) filters.paymentMethod = paymentMethod;
+      
+      const response = await getPayments(filters);
+      setPayments(response.data?.payments || []);
+    } catch (err) {
+      console.error('Error fetching payments:', err);
+      setError(err.message || 'Failed to load payments');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const payments = [
-    {
-      id: 1,
-      date: "Dec 10, 2025",
-      invoiceNo: "INV-2025-RS-0001",
-      client: "Client One",
-      method: "Bank Transfer",
-      reference: "TXN-001234",
-      amount: 3250,
-      status: "paid",
-    },
-    {
-      id: 2,
-      date: "Dec 9, 2025",
-      invoiceNo: "INV-2025-RS-0002",
-      client: "Acme Corp",
-      method: "UPI",
-      reference: "UPI-567890",
-      amount: 5000,
-      status: "paid",
-    },
-    {
-      id: 3,
-      date: "Dec 8, 2025",
-      invoiceNo: "INV-2025-RS-0003",
-      client: "TechStart Inc",
-      method: "Cash",
-      reference: "CASH-123",
-      amount: 2500,
-      status: "paid",
-    },
-    {
-      id: 4,
-      date: "Dec 7, 2025",
-      invoiceNo: "INV-2025-RS-0004",
-      client: "Startup Labs",
-      method: "Bank Transfer",
-      reference: "TXN-002345",
-      amount: 1500,
-      status: "partial",
-    },
-    {
-      id: 5,
-      date: "Dec 6, 2025",
-      invoiceNo: "INV-2025-RS-0005",
-      client: "Digital Agency",
-      method: "Credit Card",
-      reference: "CC-789012",
-      amount: 0,
-      status: "failed",
-    },
-  ];
+  // Calculate stats from real payment data
+  const stats = {
+    totalReceived: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
+    pendingAmount: 0, // This would come from invoices with amountDue > 0
+    lastPaymentDate: payments.length > 0 
+      ? new Date(payments[0].paymentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'No payments yet',
+  };
+
+  // Filter payments based on search query
+  const filteredPayments = payments.filter(payment => {
+    if (!searchQuery) return true;
+    
+    const searchLower = searchQuery.toLowerCase();
+    const invoiceNumber = payment.invoiceId?.invoiceNumber || '';
+    const clientName = payment.invoiceId?.clientId?.name || '';
+    const reference = payment.referenceNumber || '';
+    
+    return (
+      invoiceNumber.toLowerCase().includes(searchLower) ||
+      clientName.toLowerCase().includes(searchLower) ||
+      reference.toLowerCase().includes(searchLower)
+    );
+  });
 
   const StatusBadge = ({ status }) => {
-    const styles = {
-      paid: "bg-green-100 text-green-700 border-green-200",
-      partial: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      failed: "bg-red-100 text-red-700 border-red-200",
-    };
-
-    const labels = {
-      paid: "Paid",
-      partial: "Partial",
-      failed: "Failed",
-    };
-
+    // Payment records don't have status, they're always "paid" once recorded
     return (
-      <span
-        className={`px-3 py-1 rounded-full text-sm font-medium border ${
-          styles[status] || styles.paid
-        }`}
-      >
-        {labels[status]}
+      <span className="px-3 py-1 rounded-full text-sm font-medium border bg-green-100 text-green-700 border-green-200">
+        Paid
       </span>
     );
   };
@@ -111,26 +91,32 @@ const PaymentsPage = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F7F7FB]">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
             <p className="text-gray-500 mt-1">
-              Track all received and pending payments.
+              Track all received payments across invoices.
             </p>
           </div>
-
-          <Button
-            variant="primary"
-            onClick={() => navigate("/payments/new")}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Payment
-          </Button>
         </div>
 
         {/* Summary Stats Row */}
@@ -208,26 +194,16 @@ const PaymentsPage = () => {
                 <option value="upi">UPI</option>
                 <option value="cash">Cash</option>
                 <option value="credit_card">Credit Card</option>
+                <option value="debit_card">Debit Card</option>
+                <option value="cheque">Cheque</option>
+                <option value="other">Other</option>
               </Select>
             </div>
-          </div>
-
-          <div className="mt-4">
-            <Select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              placeholder="Status"
-            >
-              <option value="">All Status</option>
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-              <option value="failed">Failed</option>
-            </Select>
           </div>
         </div>
 
         {/* Payments Table */}
-        {payments.length > 0 ? (
+        {filteredPayments.length > 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -260,38 +236,42 @@ const PaymentsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map((payment) => (
+                  {filteredPayments.map((payment) => (
                     <tr
-                      key={payment.id}
+                      key={payment._id}
                       className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition"
                     >
-                      <td className="py-3 px-4 text-gray-900">{payment.date}</td>
+                      <td className="py-3 px-4 text-gray-900">
+                        {new Date(payment.paymentDate).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </td>
                       <td className="py-3 px-4">
                         <span className="font-medium text-indigo-600">
-                          {payment.invoiceNo}
+                          {payment.invoiceId?.invoiceNumber || 'N/A'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-900">
-                        {payment.client}
+                        {payment.invoiceId?.clientId?.name || 'Unknown'}
                       </td>
-                      <td className="py-3 px-4 text-gray-700">
-                        {payment.method}
+                      <td className="py-3 px-4 text-gray-700 capitalize">
+                        {payment.paymentMethod.replace('_', ' ')}
                       </td>
                       <td className="py-3 px-4 text-gray-600 font-mono text-sm">
-                        {payment.reference}
+                        {payment.referenceNumber || '-'}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-gray-900">
-                        {payment.status === "failed"
-                          ? "-"
-                          : `$${payment.amount.toLocaleString()}`}
+                        ${payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <StatusBadge status={payment.status} />
+                        <StatusBadge />
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() =>
-                            navigate(`/invoices/${payment.invoiceNo}`)
+                            navigate(`/invoices/${payment.invoiceId?._id}`)
                           }
                           className="p-1.5 text-gray-600 hover:text-indigo-600 transition-colors"
                           title="View Invoice"
@@ -315,14 +295,14 @@ const PaymentsPage = () => {
                 No payments recorded yet.
               </h3>
               <p className="text-gray-500 mb-6">
-                Start tracking your payments by adding your first transaction.
+                Payments are automatically recorded when you use the "Record Payment" feature on invoices.
               </p>
               <Button
                 variant="primary"
-                onClick={() => navigate("/payments/new")}
+                onClick={() => navigate("/invoices")}
                 className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
               >
-                Add Payment
+                View Invoices
               </Button>
             </div>
           </div>

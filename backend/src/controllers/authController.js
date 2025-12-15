@@ -30,7 +30,14 @@ const signup = async (req, res, next) => {
     res.status(201).json({
       success: true,
       data: {
-        user: { id: user._id, fullName: user.fullName, email: user.email },
+        user: { 
+          id: user._id, 
+          fullName: user.fullName, 
+          email: user.email,
+          currency: user.currency || 'USD',
+          defaultHourlyRate: user.defaultHourlyRate || 0,
+          profilePicture: user.profilePicture
+        },
         token,
       },
     });
@@ -66,7 +73,14 @@ const login = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        user: { id: user._id, fullName: user.fullName, email: user.email },
+        user: { 
+          id: user._id, 
+          fullName: user.fullName, 
+          email: user.email,
+          currency: user.currency || 'USD',
+          defaultHourlyRate: user.defaultHourlyRate || 0,
+          profilePicture: user.profilePicture
+        },
         token,
       },
     });
@@ -88,7 +102,7 @@ const getMe = async (req, res, next) => {
 // Update user profile (name, email, hourlyRate)
 const updateProfile = async (req, res, next) => {
   try {
-    const { fullName, email, defaultHourlyRate } = req.body;
+    const { fullName, email, defaultHourlyRate, profilePicture, currency } = req.body;
     const userId = req.user._id;
 
     // Check if email is being changed and if it's already taken
@@ -106,6 +120,8 @@ const updateProfile = async (req, res, next) => {
     if (fullName) updateData.fullName = fullName;
     if (email) updateData.email = email;
     if (defaultHourlyRate !== undefined) updateData.defaultHourlyRate = defaultHourlyRate;
+    if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
+    if (currency) updateData.currency = currency;
 
     const user = await User.findByIdAndUpdate(
       userId,

@@ -6,17 +6,25 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import StatCard from '../../components/ui/StatCard';
 import TimeLogTable from '../../components/projects/TimeLogTable';
 import InvoiceTable from '../../components/projects/InvoiceTable';
-import { getProjectById } from '../../api/projectApi';
+import { getProjectById, getProjectStatsById } from '../../api/projectApi';
 import { getTimeLogs } from '../../api/timeApi';
 import { getInvoices } from '../../api/invoiceApi';
+import { useAuth } from '../../context/AuthContext';
 
 const ProjectDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { formatAmount } = useAuth();
 
   const [project, setProject] = useState(null);
   const [timeLogs, setTimeLogs] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [stats, setStats] = useState({
+    totalHours: 0,
+    totalBilled: 0,
+    totalPaid: 0,
+    pendingAmount: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,23 +36,38 @@ const ProjectDetailPage = () => {
       try {
         // Fetch project details
         const projectResponse = await getProjectById(id);
-        const projectData = projectResponse.project || projectResponse;
+        const projectData = projectResponse.data || projectResponse;
         setProject(projectData);
 
-        // Fetch time logs for this project
+        // Fetch project statistics from backend
+        try {
+          const statsResponse = await getProjectStatsById(id);
+          const statsData = statsResponse.data || statsResponse;
+          setStats(statsData);
+        } catch (err) {
+          console.error('Error fetching project stats:', err);
+          setStats({
+            totalHours: 0,
+            totalBilled: 0,
+            totalPaid: 0,
+            pendingAmount: 0
+          });
+        }
+
+        // Fetch time logs for this project (for display in table)
         try {
           const timeLogsResponse = await getTimeLogs({ projectId: id });
-          const logsData = Array.isArray(timeLogsResponse) ? timeLogsResponse : timeLogsResponse.timeLogs || [];
+          const logsData = timeLogsResponse.data || [];
           setTimeLogs(logsData);
         } catch (err) {
           console.error('Error fetching time logs:', err);
           setTimeLogs([]);
         }
 
-        // Fetch invoices for this project
+        // Fetch invoices for this project (for display in table)
         try {
           const invoicesResponse = await getInvoices({ projectId: id });
-          const invoicesData = Array.isArray(invoicesResponse) ? invoicesResponse : invoicesResponse.invoices || [];
+          const invoicesData = invoicesResponse.data || [];
           setInvoices(invoicesData);
         } catch (err) {
           console.error('Error fetching invoices:', err);
@@ -84,13 +107,6 @@ const ProjectDetailPage = () => {
     );
   }
 
-  // Calculate stats
-  const totalHours = timeLogs.reduce((sum, log) => sum + (log.hours || 0), 0);
-  const totalEarned = totalHours * (project.hourlyRate || 0);
-  const pendingInvoices = invoices
-    .filter(inv => inv.status !== 'paid' && inv.status !== 'Paid')
-    .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
@@ -122,7 +138,7 @@ const ProjectDetailPage = () => {
             <span className="text-gray-300">•</span>
             <StatusBadge status={project.status} />
             <span className="text-gray-300">•</span>
-            <span className="text-sm text-gray-600">{totalHours.toFixed(1)}h logged</span>
+            <span className="text-sm text-gray-600">{stats.totalHours?.toFixed(1) || '0.0'}h logged</span>
           </div>
         </div>
         <Button 
@@ -167,21 +183,21 @@ const ProjectDetailPage = () => {
         <StatCard
           icon={Clock}
           label="Total Hours Logged"
-          value={`${totalHours.toFixed(1)}h`}
+          value={`${stats.totalHours?.toFixed(1) || '0.0'}h`}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
         />
         <StatCard
           icon={DollarSign}
-          label="Total Earned"
-          value={`$${totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          label="Total Billed"
+          value={formatAmount(stats.totalBilled || 0)}
           iconBg="bg-green-100"
           iconColor="text-green-600"
         />
         <StatCard
           icon={FileText}
           label="Pending Invoices"
-          value={`$${pendingInvoices.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={formatAmount(stats.pendingAmount || 0)}
           iconBg="bg-orange-100"
           iconColor="text-orange-600"
         />

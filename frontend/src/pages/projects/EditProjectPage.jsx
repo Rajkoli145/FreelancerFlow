@@ -43,15 +43,15 @@ const EditProjectPage = () => {
           getClients()
         ]);
         
-        const project = projectRes.project || projectRes;
-        const clientsData = Array.isArray(clientsRes) ? clientsRes : clientsRes.clients || [];
+        const project = projectRes.data || projectRes;
+        const clientsData = clientsRes.data || [];
         
         setClients(clientsData);
         setLoadingClients(false);
         
         // Pre-fill form
         setFormData({
-          projectTitle: project.name || '',
+          projectTitle: project.title || project.name || '',
           client: project.clientId?._id || project.clientId || '',
           hourlyRate: project.hourlyRate?.toString() || '',
           startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
@@ -121,7 +121,7 @@ const EditProjectPage = () => {
       setError(null);
       
       const projectData = {
-        name: formData.projectTitle,
+        title: formData.projectTitle,
         clientId: formData.client,
         hourlyRate: parseFloat(formData.hourlyRate),
         startDate: formData.startDate,

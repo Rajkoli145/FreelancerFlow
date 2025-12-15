@@ -65,3 +65,17 @@ export const deleteTimeLog = async (id) => {
     throw error.response?.data || error;
   }
 };
+
+/**
+ * Get unbilled time logs
+ * @param {string} projectId - Optional project ID to filter
+ */
+export const getUnbilledTimeLogs = async (projectId = null) => {
+  try {
+    const params = projectId ? { projectId } : {};
+    const response = await axiosInstance.get('/timelog/unbilled', { params });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

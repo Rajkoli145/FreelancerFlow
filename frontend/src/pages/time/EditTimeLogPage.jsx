@@ -35,8 +35,8 @@ const EditTimeLogPage = () => {
           getProjects()
         ]);
         
-        const timeLog = timeLogRes.timeLog || timeLogRes;
-        const projectsData = Array.isArray(projectsRes) ? projectsRes : projectsRes.projects || [];
+        const timeLog = timeLogRes.data || timeLogRes;
+        const projectsData = projectsRes.data || [];
         
         setProjects(projectsData);
         setLoadingProjects(false);
@@ -165,7 +165,7 @@ const EditTimeLogPage = () => {
               <option value="">{loadingProjects ? 'Loading...' : 'Select a project'}</option>
               {projects.map((project) => (
                 <option key={project._id || project.id} value={project._id || project.id}>
-                  {project.name}
+                  {project.title || project.name}
                 </option>
               ))}
             </Select>

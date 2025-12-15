@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Calendar } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import { format } from 'date-fns';
+import '../../styles/neumorphism.css';
 
 const ProjectRow = ({ project }) => {
   const navigate = useNavigate();
@@ -25,12 +26,12 @@ const ProjectRow = ({ project }) => {
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr className="transition-colors">
       {/* Project Name & Due Date */}
       <td className="px-6 py-4">
         <div>
-          <p className="font-medium text-gray-900">{project.name || project.title}</p>
-          <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+          <p className="font-medium neu-heading">{project.name || project.title}</p>
+          <div className="flex items-center gap-1 mt-1 text-sm neu-text-light">
             <Calendar className="w-3.5 h-3.5" />
             <span>Due: {formatDate(project.dueDate || project.deadline)}</span>
           </div>
@@ -39,19 +40,21 @@ const ProjectRow = ({ project }) => {
 
       {/* Client */}
       <td className="px-6 py-4">
-        <p className="text-gray-900">{project.client?.name || project.clientName || 'N/A'}</p>
+        <p className="neu-text">
+          {project.clientId?.name || project.client?.name || project.clientName || 'N/A'}
+        </p>
       </td>
 
       {/* Hours */}
       <td className="px-6 py-4">
-        <p className="font-medium text-gray-900">
+        <p className="font-medium neu-heading">
           {project.hoursLogged || project.hours || 0} h
         </p>
       </td>
 
       {/* Status */}
       <td className="px-6 py-4">
-        <StatusBadge status={project.status} size="sm" />
+        <StatusBadge status={project.status?.toLowerCase() || 'active'} size="sm" />
       </td>
 
       {/* Actions */}
@@ -59,17 +62,17 @@ const ProjectRow = ({ project }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleView}
-            className="p-2 rounded-lg hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 transition-colors"
+            className="neu-button p-2"
             title="View project"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4 neu-text-light" />
           </button>
           <button
             onClick={handleEdit}
-            className="p-2 rounded-lg hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
+            className="neu-button p-2"
             title="Edit project"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-4 h-4 neu-text-light" />
           </button>
         </div>
       </td>

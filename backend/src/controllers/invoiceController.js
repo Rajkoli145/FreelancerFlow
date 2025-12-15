@@ -1,94 +1,204 @@
 const Invoice = require("../models/Invoice");
 const TimeLog = require("../models/TimeLog");
-const generateInvoicePDF = require("../utils/pdfGenerator");
-const generateInvoiceNumber = require("../utils/invoiceNumberHelper");
 const Client = require("../models/Client");
 const Project = require("../models/Project");
+const generateInvoicePDF = require("../utils/pdfGenerator");
+const generateInvoiceNumber = require("../utils/invoiceNumberHelper");
+const { createNotification } = require("./notificationController");
 
 // Create Invoice
 exports.createInvoice = async (req, res) => {
   try {
-    const { clientId, projectId, items, dueDate } = req.body;
+    const { clientId, projectId, items, dueDate, taxRate, discountAmount, notes } = req.body;
+
+    // Validate client exists
+    const client = await Client.findOne({ _id: clientId, userId: req.user._id });
+    if (!client) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Client not found" 
+      });
+    }
+
+    // If projectId provided, verify it belongs to the client
+    if (projectId) {
+      const project = await Project.findOne({ 
+        _id: projectId, 
+        userId: req.user._id 
+      });
+      
+      if (!project) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Project not found" 
+        });
+      }
+      
+      if (project.clientId.toString() !== clientId.toString()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Project does not belong to the selected client" 
+        });
+      }
+    }
 
     let invoiceItems = [];
-    let totalAmount = 0;
+    let subtotal = 0;
 
     // If items are provided in request body, use them directly
     if (items && Array.isArray(items) && items.length > 0) {
-      // Calculate amount for each item if not provided
-      invoiceItems = items.map(item => ({
-        description: item.description || '',
-        hours: item.hours || 0,
-        rate: item.rate || 0,
-        amount: item.amount || (item.hours * item.rate) // Calculate if not provided
-      }));
-      
-      // Calculate total amount from all items
-      totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
-    } else {
-      // Otherwise, fetch time logs and generate items from them
-      const logs = await TimeLog.find({
+      invoiceItems = items.map(item => {
+        const quantity = item.quantity || item.hours || 1;
+        const rate = item.rate || 0;
+        const amount = item.amount || (quantity * rate);
+        
+        subtotal += amount;
+        
+        return {
+          description: item.description || '',
+          quantity: quantity,
+          rate: rate,
+          amount: amount,
+          timeLogId: item.timeLogId || undefined
+        };
+      });
+    } else if (projectId) {
+      // Generate items from unbilled time logs
+      const unbilledLogs = await TimeLog.find({
         projectId,
-        userId: req.user._id
+        userId: req.user._id,
+        billable: true,
+        invoiced: false
       });
 
-      if (logs.length === 0) {
+      if (unbilledLogs.length === 0) {
         return res.status(400).json({ 
           success: false, 
-          error: "No items provided and no time logs found for this project" 
+          error: "No unbilled time logs found for this project" 
         });
       }
 
-      // Get rate from request body or use default
-      const rate = req.body.rate || 0;
+      // Get project for hourly rate
+      const project = await Project.findById(projectId);
+      const rate = project.hourlyRate || 0;
 
       // Convert logs into invoice items
-      invoiceItems = logs.map(log => ({
-        description: log.task,
-        hours: log.hours,
-        rate,
-        amount: log.hours * rate
-      }));
+      invoiceItems = unbilledLogs.map(log => {
+        const amount = log.hours * rate;
+        subtotal += amount;
+        
+        return {
+          description: log.description,
+          quantity: log.hours,
+          rate: rate,
+          amount: amount,
+          timeLogId: log._id
+        };
+      });
 
-      totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
+      // Mark time logs as invoiced (will be updated after invoice creation)
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Either items or projectId with unbilled hours must be provided" 
+      });
     }
+
+    // Calculate financial breakdown
+    const calculatedTaxRate = taxRate || 0;
+    const taxAmount = (subtotal * calculatedTaxRate) / 100;
+    const calculatedDiscountAmount = discountAmount || 0;
+    const totalAmount = subtotal + taxAmount - calculatedDiscountAmount;
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber(req.user);
 
+    // Create invoice
     const invoice = await Invoice.create({
       userId: req.user._id,
       clientId,
-      projectId,
+      projectId: projectId || undefined,
       items: invoiceItems,
+      subtotal,
+      taxRate: calculatedTaxRate,
+      taxAmount,
+      discountAmount: calculatedDiscountAmount,
       totalAmount,
-      dueDate,
-      invoiceNumber
+      amountPaid: 0,
+      currency: client.currency || 'INR',
+      dueDate: dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      invoiceNumber,
+      notes,
+      status: 'draft'
     });
 
-    res.json({ success: true, data: invoice });
+    // Mark time logs as invoiced
+    if (projectId && invoiceItems.length > 0) {
+      const timeLogIds = invoiceItems
+        .map(item => item.timeLogId)
+        .filter(Boolean);
+      
+      if (timeLogIds.length > 0) {
+        await TimeLog.updateMany(
+          { _id: { $in: timeLogIds } },
+          { 
+            $set: { 
+              invoiced: true,
+              invoiceId: invoice._id
+            }
+          }
+        );
+      }
+    }
+
+    res.status(201).json({ success: true, data: invoice });
 
   } catch (err) {
+    console.error('Error creating invoice:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
 
 
-// Get all invoices (auto overdue update)
+// Get all invoices
 exports.getInvoices = async (req, res) => {
   try {
-    let invoices = await Invoice.find({ userId: req.user._id });
+    const invoices = await Invoice.find({ userId: req.user._id })
+      .populate('clientId', 'name email company')
+      .populate('projectId', 'title')
+      .sort({ createdAt: -1 });
 
-    for (let inv of invoices) {
-      if (inv.status === "unpaid" && new Date() > inv.dueDate) {
-        inv.status = "overdue";
-        await inv.save();
+    // Check for overdue invoices and create notifications
+    const now = new Date();
+    for (const invoice of invoices) {
+      if (invoice.status !== 'paid' && new Date(invoice.dueDate) < now) {
+        // Check if notification already exists for this overdue invoice
+        const Notification = require("../models/Notification");
+        const existingNotification = await Notification.findOne({
+          userId: req.user._id,
+          type: 'invoice_overdue',
+          relatedEntityType: 'Invoice',
+          relatedEntityId: invoice._id
+        });
+
+        if (!existingNotification) {
+          const clientName = invoice.clientId?.name || 'Unknown Client';
+          await createNotification(
+            req.user._id,
+            'invoice_overdue',
+            `Invoice ${invoice.invoiceNumber} is overdue`,
+            `Payment from ${clientName} is overdue. Due date was ${new Date(invoice.dueDate).toLocaleDateString()}.`,
+            'Invoice',
+            invoice._id
+          );
+        }
       }
     }
 
     res.json({ success: true, data: invoices });
 
   } catch (err) {
+    console.error('Error fetching invoices:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -100,7 +210,8 @@ exports.getInvoiceById = async (req, res) => {
     const invoice = await Invoice.findOne({
       _id: req.params.id,
       userId: req.user._id
-    });
+    }).populate('clientId', 'name email company phone address')
+      .populate('projectId', 'title hourlyRate');
 
     if (!invoice)
       return res.status(404).json({ success: false, error: "Invoice not found" });
@@ -202,6 +313,53 @@ exports.downloadInvoice = async (req, res) => {
 
     res.download(filePath);
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
+ * Get invoice statistics grouped by status
+ */
+exports.getInvoiceStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const stats = await Invoice.aggregate([
+      { $match: { userId } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$totalAmount' },
+          paidAmount: { $sum: '$amountPaid' }
+        }
+      }
+    ]);
+    
+    // Format response with all possible statuses
+    const result = {
+      total: 0,
+      draft: 0,
+      sent: 0,
+      viewed: 0,
+      partial: 0,
+      paid: 0,
+      overdue: 0,
+      cancelled: 0,
+      urgent: 0 // overdue + partial
+    };
+    
+    stats.forEach(stat => {
+      result[stat._id] = stat.count;
+      result.total += stat.count;
+    });
+    
+    // Calculate urgent count (overdue + partial)
+    result.urgent = (result.overdue || 0) + (result.partial || 0);
+    
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Error fetching invoice stats:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 };

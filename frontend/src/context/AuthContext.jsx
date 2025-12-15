@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
+import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
 
 const AuthContext = createContext(null);
 
@@ -81,6 +82,12 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  // Currency helpers
+  const currencyCode = user?.currency || 'USD';
+  const currencySymbol = getCurrencySymbol(currencyCode);
+  
+  const formatAmount = (amount) => formatCurrency(amount, currencyCode);
+
   const value = {
     user,
     setUser,
@@ -88,7 +95,10 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     signup,
-    logout
+    logout,
+    currencyCode,
+    currencySymbol,
+    formatAmount
   };
 
   return (

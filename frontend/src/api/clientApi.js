@@ -11,6 +11,17 @@ export const getClients = async (params = {}) => {
   }
 };
 
+// Get overall client stats (outstanding amount, etc.)
+export const getAllClientsStats = async () => {
+  try {
+    const response = await axiosInstance.get('/client/stats/all');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching clients stats:', error);
+    throw error;
+  }
+};
+
 // Get a single client by ID
 export const getClientById = async (id) => {
   try {
@@ -51,6 +62,17 @@ export const deleteClient = async (id) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting client:', error);
+    throw error;
+  }
+};
+
+// Get client statistics
+export const getClientStats = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/client/${id}/stats`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client stats:', error);
     throw error;
   }
 };

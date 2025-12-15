@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Briefcase, CheckCircle, Clock, Loader } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import SummaryCard from '../../components/ui/SummaryCard';
+import NeuButton from '../../components/ui/NeuButton';
+import NeuInput from '../../components/ui/NeuInput';
+import StatCard from '../../components/ui/StatCard';
+import PageHeader from '../../components/ui/PageHeader';
 import ProjectRow from '../../components/projects/ProjectRow';
 import Pagination from '../../components/ui/Pagination';
 import { getProjects, getProjectStats } from '../../api/projectApi';
+import '../../styles/neumorphism.css';
 
 const ProjectsListPage = () => {
   const navigate = useNavigate();
@@ -47,11 +50,11 @@ const ProjectsListPage = () => {
 
       const response = await getProjects(params);
       
-      // Handle different response structures
-      if (response.projects) {
-        setProjects(response.projects);
+      // Backend returns { success: true, data: [...] }
+      if (response.data) {
+        setProjects(response.data);
         setTotalPages(response.totalPages || 1);
-        setTotalItems(response.total || response.projects.length);
+        setTotalItems(response.total || response.data.length);
       } else if (Array.isArray(response)) {
         setProjects(response);
         setTotalItems(response.length);
@@ -165,6 +168,7 @@ const ProjectsListPage = () => {
   // Filter projects locally if using mock data
   const filteredProjects = projects.filter((project) => {
     const matchesSearch = !searchQuery || 
+      project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -178,70 +182,57 @@ const ProjectsListPage = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="neu-container space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-600 mt-2">Manage and track your client work</p>
-        </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => navigate('/projects/new')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Add New Project
-        </Button>
-      </div>
+      <PageHeader 
+        title="Projects"
+        subtitle="Manage and track your client work"
+        actionLabel="Add New Project"
+        actionIcon={Plus}
+        onActionClick={() => navigate('/projects/new')}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <SummaryCard
+        <StatCard 
+          icon={Briefcase}
           title="Total Projects"
           value={stats.total || filteredProjects.length}
-          icon={Briefcase}
-          color="indigo"
+          iconBg="#4A5FFF"
         />
-        <SummaryCard
+        
+        <StatCard 
+          icon={CheckCircle}
           title="Active Projects"
           value={stats.active || filteredProjects.filter(p => p.status === 'Active').length}
-          change="+3"
-          trend="up"
-          icon={CheckCircle}
-          color="green"
+          iconBg="#22c55e"
         />
-        <SummaryCard
+        
+        <StatCard 
+          icon={Clock}
           title="Hours This Month"
           value={`${stats.hoursThisMonth || 156} h`}
-          change="+12.5%"
-          trend="up"
-          icon={Clock}
-          color="blue"
+          iconBg="#4A5FFF"
         />
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="neu-card">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            />
-          </div>
+          <NeuInput
+            type="text"
+            placeholder="Search projects..."
+            value={searchQuery}
+            onChange={handleSearch}
+            icon={Search}
+          />
 
           {/* Client Filter */}
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="neu-input"
           >
             <option value="">All Clients</option>
             <option value="Acme Corp">Acme Corp</option>
@@ -256,7 +247,7 @@ const ProjectsListPage = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="neu-input"
           >
             <option value="">All Statuses</option>
             <option value="Active">Active</option>
@@ -268,10 +259,10 @@ const ProjectsListPage = () => {
       </div>
 
       {/* Projects Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="neu-card overflow-hidden">
         {error && (
-          <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-            <p className="text-sm text-yellow-700">
+          <div className="p-4 neu-card-inset mb-4">
+            <p className="text-sm" style={{ color: 'var(--neu-warning)' }}>
               ⚠️ Using mock data. API Error: {error}
             </p>
           </div>
@@ -279,13 +270,13 @@ const ProjectsListPage = () => {
         
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader className="w-8 h-8 text-indigo-600 animate-spin" />
+            <Loader className="w-8 h-8 animate-spin" style={{ color: 'var(--neu-primary)' }} />
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-12">
-            <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No projects found</h3>
-            <p className="text-gray-600">
+            <Briefcase className="w-12 h-12 neu-text-light mx-auto mb-3" />
+            <h3 className="text-lg font-medium neu-heading mb-1">No projects found</h3>
+            <p className="neu-text-light">
               {searchQuery || selectedClient || selectedStatus
                 ? 'Try adjusting your filters'
                 : 'Get started by creating your first project'}
@@ -295,26 +286,26 @@ const ProjectsListPage = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="neu-card-inset border-b" style={{ borderColor: 'var(--neu-dark)' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold neu-text-light uppercase tracking-wider">
                       Project Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold neu-text-light uppercase tracking-wider">
                       Client
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold neu-text-light uppercase tracking-wider">
                       Hours
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold neu-text-light uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold neu-text-light uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y" style={{ borderColor: 'var(--neu-dark)' }}>
                   {filteredProjects.map((project) => (
                     <ProjectRow key={project.id || project._id} project={project} />
                   ))}

@@ -110,7 +110,7 @@ function generateInvoicePDF(invoice, client, project) {
         .font('Helvetica-Bold')
         .fillColor('#000000')
         .text("DESCRIPTION", 60, tableTop + 8, { width: 200, align: 'left' })
-        .text("HOURS", 260, tableTop + 8, { width: 50, align: 'center' })
+        .text("QTY/HOURS", 260, tableTop + 8, { width: 50, align: 'center' })
         .text("RATE", 320, tableTop + 8, { width: 80, align: 'right' })
         .text("AMOUNT", 420, tableTop + 8, { width: 120, align: 'right' });
 
@@ -125,12 +125,13 @@ function generateInvoicePDF(invoice, client, project) {
           doc.rect(50, yPosition - 5, 500, 25).fill('#fafafa');
         }
 
+        const quantity = item.quantity || item.hours || 0;
         doc
           .fontSize(10)
           .font('Helvetica')
           .fillColor('#000000')
           .text(item.description || 'N/A', 60, yPosition, { width: 190, align: 'left' })
-          .text(item.hours ? item.hours.toString() : '0', 260, yPosition, { width: 50, align: 'center' })
+          .text(quantity.toString(), 260, yPosition, { width: 50, align: 'center' })
           .text(item.rate ? `₹${item.rate.toFixed(2)}` : '₹0.00', 320, yPosition, { width: 80, align: 'right' })
           .text(item.amount ? `₹${item.amount.toFixed(2)}` : '₹0.00', 420, yPosition, { width: 120, align: 'right' });
 

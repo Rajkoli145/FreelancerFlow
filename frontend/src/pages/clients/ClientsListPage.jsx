@@ -1,66 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Users, UserCheck, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getClients } from '../../api/clientApi';
-import Button from '../../components/ui/Button';
-import SummaryCard from '../../components/ui/SummaryCard';
-import Pagination from '../../components/ui/Pagination';
+import { getClients, getAllClientsStats } from '../../api/clientApi';
 import Loader from '../../components/ui/Loader';
 import ClientRow from '../../components/clients/ClientRow';
+import Pagination from '../../components/ui/Pagination';
+import NeuInput from '../../components/ui/NeuInput';
+import NeuButton from '../../components/ui/NeuButton';
+import StatCard from '../../components/ui/StatCard';
+import PageHeader from '../../components/ui/PageHeader';
+import { useAuth } from '../../context/AuthContext';
+import '../../styles/neumorphism.css';
 
 const ClientsListPage = () => {
   const navigate = useNavigate();
+  const { formatAmount } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [outstandingAmount, setOutstandingAmount] = useState(0);
   const itemsPerPage = 10;
-
-  // Mock data fallback
-  const mockClients = [
-    {
-      _id: '1',
-      name: 'Acme Corporation',
-      email: 'contact@acme.com',
-      totalBilled: 45000,
-      outstandingAmount: 5000,
-      status: 'pending',
-    },
-    {
-      _id: '2',
-      name: 'Tech Startup Inc.',
-      email: 'hello@techstartup.io',
-      totalBilled: 32000,
-      outstandingAmount: 0,
-      status: 'paid',
-    },
-    {
-      _id: '3',
-      name: 'Global Solutions LLC',
-      email: 'info@globalsolutions.com',
-      totalBilled: 68000,
-      outstandingAmount: 12000,
-      status: 'overdue',
-    },
-    {
-      _id: '4',
-      name: 'Creative Agency Co.',
-      email: 'team@creativeagency.com',
-      totalBilled: 28500,
-      outstandingAmount: 0,
-      status: 'paid',
-    },
-    {
-      _id: '5',
-      name: 'Digital Marketing Pro',
-      email: 'contact@digitalmarketing.com',
-      totalBilled: 19000,
-      outstandingAmount: 3500,
-      status: 'pending',
-    },
-  ];
 
   // Fetch clients from API
   useEffect(() => {
@@ -69,12 +31,13 @@ const ClientsListPage = () => {
         setLoading(true);
         setError(null);
         const response = await getClients();
-        const clientList = Array.isArray(response) ? response : response.clients || [];
+        // Backend returns { success: true, data: [...] }
+        const clientList = response.data || [];
         setClients(clientList);
       } catch (err) {
         console.error('Error fetching clients:', err);
-        setError(`Using mock data. API Error: ${err.message}`);
-        setClients(mockClients);
+        setError(err.response?.data?.error || err.message);
+        setClients([]);
       } finally {
         setLoading(false);
       }
@@ -83,10 +46,26 @@ const ClientsListPage = () => {
     fetchClients();
   }, []);
 
+  // Fetch overall client stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await getAllClientsStats();
+        const data = response.data || {};
+        setOutstandingAmount(data.outstandingAmount || 0);
+      } catch (err) {
+        console.error('Error fetching client stats:', err);
+        setOutstandingAmount(0);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   // Calculate metrics
   const totalClients = clients.length;
-  const activeClients = clients.filter((c) => c.status !== 'paid').length;
-  const outstandingAmount = clients.reduce((sum, c) => sum + (c.outstandingAmount || 0), 0);
+  // Fix: Client status is 'Active' or 'Archived', not payment-related
+  const activeClients = clients.filter((c) => c.status === 'Active').length;
 
   // Filter clients
   const filteredClients = clients.filter((client) => {
@@ -105,69 +84,55 @@ const ClientsListPage = () => {
   const paginatedClients = filteredClients.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="space-y-6">
+    <div className="neu-container space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your client relationships, billing details, and contact info.
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          className="flex items-center gap-2"
-          onClick={() => navigate('/clients/new')}
-        >
-          <Plus className="w-4 h-4" />
-          Add Client
-        </Button>
-      </div>
+      <PageHeader 
+        title="Clients"
+        subtitle="Manage your client relationships, billing details, and contact info."
+        actionLabel="Add Client"
+        actionIcon={Plus}
+        onActionClick={() => navigate('/clients/new')}
+      />
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-800">{error}</p>
+        <div className="neu-card-inset p-4" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <p className="text-sm" style={{ color: '#92400e' }}>{error}</p>
         </div>
       )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <SummaryCard
+        <StatCard 
+          icon={Users}
           title="Total Clients"
           value={totalClients}
-          icon={Users}
-          iconBg="bg-indigo-100"
-          iconColor="text-indigo-600"
+          iconBg="#4A5FFF"
         />
-        <SummaryCard
+        <StatCard 
+          icon={UserCheck}
           title="Active Clients"
           value={activeClients}
-          icon={UserCheck}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
+          iconBg="#22c55e"
         />
-        <SummaryCard
-          title="Outstanding Amount"
-          value={`$${outstandingAmount.toLocaleString()}`}
+        <StatCard 
           icon={DollarSign}
-          iconBg="bg-orange-100"
-          iconColor="text-orange-600"
+          title="Outstanding Amount"
+          value={formatAmount(outstandingAmount)}
+          iconBg="#f97316"
         />
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="neu-card">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
+          <div className="flex-1">
+            <NeuInput 
+              icon={Search}
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
 
@@ -175,7 +140,7 @@ const ClientsListPage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="neu-input px-4"
           >
             <option value="all">All Status</option>
             <option value="paid">Paid</option>
@@ -186,16 +151,18 @@ const ClientsListPage = () => {
       </div>
 
       {/* Clients Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="neu-card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader />
+            <div className="animate-spin" style={{ color: 'var(--neu-primary)' }}>
+              <Loader />
+            </div>
           </div>
         ) : filteredClients.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No clients found</h3>
-            <p className="text-gray-600">
+            <Users className="w-12 h-12 neu-text-light mx-auto mb-4" />
+            <h3 className="text-lg font-semibold neu-heading mb-2">No clients found</h3>
+            <p className="neu-text">
               {searchTerm || statusFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'Get started by adding your first client'}
@@ -205,26 +172,26 @@ const ClientsListPage = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="neu-card-inset">
                   <tr>
-                    <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">
+                    <th className="text-left py-3 px-6 text-sm font-semibold neu-text">
                       Client Name
                     </th>
-                    <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">
+                    <th className="text-left py-3 px-6 text-sm font-semibold neu-text">
                       Email
                     </th>
-                    <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">
+                    <th className="text-left py-3 px-6 text-sm font-semibold neu-text">
                       Total Billed
                     </th>
-                    <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">
+                    <th className="text-left py-3 px-6 text-sm font-semibold neu-text">
                       Outstanding
                     </th>
-                    <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">
+                    <th className="text-left py-3 px-6 text-sm font-semibold neu-text">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody style={{ borderTop: '1px solid var(--neu-dark)' }}>
                   {paginatedClients.map((client) => (
                     <ClientRow key={client._id} client={client} />
                   ))}
@@ -234,7 +201,7 @@ const ClientsListPage = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="border-t border-gray-200 px-6 py-4">
+              <div className="px-6 py-4" style={{ borderTop: '1px solid var(--neu-dark)' }}>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

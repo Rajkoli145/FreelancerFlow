@@ -7,7 +7,8 @@ const {
   getProjectById,
   updateProject,
   deleteProject,
-  getProjectStats
+  getProjectStats,
+  getProjectStatsById
 } = require('../controllers/projectController');
 
 // Get project statistics (must be before /:id route)
@@ -21,6 +22,9 @@ router.get('/', protect, getProjects);
 
 // Get a single project by ID
 router.get('/:id', protect, getProjectById);
+
+// Get project statistics by ID
+router.get('/:id/stats', protect, getProjectStatsById);
 
 // Update a project by ID
 router.put('/:id', protect, updateProject);

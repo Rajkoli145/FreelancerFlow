@@ -9,11 +9,14 @@ const {
   updateInvoice,
   deleteInvoice,
   markAsPaid,
-  downloadInvoice
+  downloadInvoice,
+  getInvoiceStats
 } = require("../controllers/invoiceController");
 
 // Create a new invoice
 router.post("/", protect, createInvoice);
+// Get invoice statistics (must be before /:id route)
+router.get("/stats", protect, getInvoiceStats);
 // Get all invoices for the authenticated user
 router.get("/", protect, getInvoices);
 // Get a single invoice by ID

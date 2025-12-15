@@ -82,3 +82,15 @@ export const getProjectStats = async () => {
     throw error.response?.data || error;
   }
 };
+
+/**
+ * Get statistics for a specific project
+ */
+export const getProjectStatsById = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/project/${id}/stats`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

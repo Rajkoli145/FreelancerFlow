@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, Building2, Edit, FileText, Briefcase, DollarSign, FileCheck } from 'lucide-react';
-import { getClientById } from '../../api/clientApi';
+import { ArrowLeft, Mail, Phone, Building2, Edit, FileText, Briefcase, DollarSign, FileCheck, Clock } from 'lucide-react';
+import { getClientById, getClientStats } from '../../api/clientApi';
 import { getProjects } from '../../api/projectApi';
 import { getInvoices } from '../../api/invoiceApi';
 import Button from '../../components/ui/Button';
@@ -10,15 +10,23 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ClientStatusBadge from '../../components/clients/ClientStatusBadge';
 import Loader from '../../components/ui/Loader';
 import EmptyState from '../../components/ui/EmptyState';
+import { useAuth } from '../../context/AuthContext';
 
 const ClientDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { formatAmount } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [client, setClient] = useState(null);
   const [projects, setProjects] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    totalInvoices: 0,
+    outstanding: 0,
+    totalHours: 0
+  });
 
   useEffect(() => {
     const fetchClientDetails = async () => {
@@ -28,23 +36,38 @@ const ClientDetailsPage = () => {
         
         // Fetch client details
         const clientResponse = await getClientById(id);
-        const clientData = clientResponse.client || clientResponse;
+        const clientData = clientResponse.data || clientResponse;
         setClient(clientData);
         
-        // Fetch projects for this client
+        // Fetch client statistics from backend
+        try {
+          const statsResponse = await getClientStats(id);
+          const statsData = statsResponse.data || statsResponse;
+          setStats(statsData);
+        } catch (err) {
+          console.error('Error fetching client stats:', err);
+          setStats({
+            totalProjects: 0,
+            totalInvoices: 0,
+            outstanding: 0,
+            totalHours: 0
+          });
+        }
+        
+        // Fetch projects for this client (for display in list)
         try {
           const projectsResponse = await getProjects({ clientId: id });
-          const projectsData = Array.isArray(projectsResponse) ? projectsResponse : projectsResponse.projects || [];
+          const projectsData = projectsResponse.data || [];
           setProjects(projectsData);
         } catch (err) {
           console.error('Error fetching projects:', err);
           setProjects([]);
         }
         
-        // Fetch invoices for this client
+        // Fetch invoices for this client (for display in list)
         try {
           const invoicesResponse = await getInvoices({ clientId: id });
-          const invoicesData = Array.isArray(invoicesResponse) ? invoicesResponse : invoicesResponse.invoices || [];
+          const invoicesData = invoicesResponse.data || [];
           setInvoices(invoicesData);
         } catch (err) {
           console.error('Error fetching invoices:', err);
@@ -62,6 +85,7 @@ const ClientDetailsPage = () => {
   }, [id]);
 
   const getInitials = (name) => {
+    if (!name || typeof name !== 'string') return '??';
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -117,13 +141,6 @@ const ClientDetailsPage = () => {
       </div>
     );
   }
-
-  // Calculate stats from real data
-  const totalProjects = projects.length;
-  const totalInvoices = invoices.length;
-  const outstandingAmount = invoices
-    .filter(inv => inv.status !== 'paid' && inv.status !== 'Paid')
-    .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -253,7 +270,7 @@ const ClientDetailsPage = () => {
               </div>
             </div>
             <div>
-              <p className="text-3xl font-bold text-gray-900">{totalProjects}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalProjects}</p>
             </div>
           </div>
 
@@ -268,7 +285,7 @@ const ClientDetailsPage = () => {
               </div>
             </div>
             <div>
-              <p className="text-3xl font-bold text-gray-900">{totalInvoices}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalInvoices}</p>
             </div>
           </div>
 
@@ -284,11 +301,32 @@ const ClientDetailsPage = () => {
             </div>
             <div>
               <p className="text-3xl font-bold text-gray-900 mb-2">
-                ${outstandingAmount.toLocaleString()}
+                {formatAmount(stats.outstanding || 0)}
               </p>
-              <ClientStatusBadge status={outstandingAmount > 0 ? 'pending' : 'paid'} />
+              <ClientStatusBadge status={stats.outstanding > 0 ? 'pending' : 'paid'} />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Total Hours Card */}
+      <div className="neu-card">
+        <div className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-100 rounded-lg p-3">
+              <Clock className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Hours Logged</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalHours || 0}h</p>
+            </div>
+          </div>
+          {stats.unbilledHours > 0 && (
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-600">Unbilled</p>
+              <p className="text-lg font-semibold text-orange-600">{stats.unbilledHours}h</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -325,7 +363,7 @@ const ClientDetailsPage = () => {
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900">{project.hoursLogged || 0}h</td>
                       <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                        ${((project.hoursLogged || 0) * (project.hourlyRate || 0)).toLocaleString()}
+                        {formatAmount((project.hoursLogged || 0) * (project.hourlyRate || 0))}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
@@ -373,7 +411,7 @@ const ClientDetailsPage = () => {
                     <tr key={invoice._id || invoice.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">{invoice.invoiceNumber}</td>
                       <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                        ${(invoice.amount || invoice.totalAmount || 0).toLocaleString()}
+                        {formatAmount(invoice.amount || invoice.totalAmount || 0)}
                       </td>
                       <td className="py-3 px-4">
                         <ClientStatusBadge status={invoice.status} />

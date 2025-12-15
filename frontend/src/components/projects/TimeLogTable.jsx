@@ -29,12 +29,14 @@ export default function TimeLogTable({ timeLogs = [], onEdit, onDelete }) {
         <tbody>
           {timeLogs.map((log) => (
             <tr 
-              key={log.id} 
+              key={log._id || log.id} 
               className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
             >
-              <td className="py-3 px-4 text-sm text-gray-900">{log.date}</td>
-              <td className="py-3 px-4 text-sm text-gray-600">{log.description}</td>
-              <td className="py-3 px-4 text-sm font-medium text-gray-900">{log.hours}h</td>
+              <td className="py-3 px-4 text-sm text-gray-900">
+                {log.date ? new Date(log.date).toLocaleDateString() : 'N/A'}
+              </td>
+              <td className="py-3 px-4 text-sm text-gray-600">{log.description || 'No description'}</td>
+              <td className="py-3 px-4 text-sm font-medium text-gray-900">{log.hours || 0}h</td>
               <td className="py-3 px-4">
                 <div className="flex items-center justify-end gap-2">
                   <button

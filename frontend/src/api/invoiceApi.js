@@ -93,3 +93,15 @@ export const downloadInvoicePDF = async (id) => {
     throw error.response?.data || error;
   }
 };
+
+/**
+ * Get invoice statistics
+ */
+export const getInvoiceStats = async () => {
+  try {
+    const response = await axiosInstance.get('/invoice/stats');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

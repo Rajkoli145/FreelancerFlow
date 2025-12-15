@@ -65,9 +65,9 @@ const EditInvoicePage = () => {
           getProjects()
         ]);
         
-        const invoice = invoiceRes.invoice || invoiceRes;
-        const clientsData = Array.isArray(clientsRes) ? clientsRes : clientsRes.clients || [];
-        const projectsData = Array.isArray(projectsRes) ? projectsRes : projectsRes.projects || [];
+        const invoice = invoiceRes.data || invoiceRes;
+        const clientsData = clientsRes.data || [];
+        const projectsData = projectsRes.data || [];
         
         setClients(clientsData);
         setProjects(projectsData);
@@ -286,7 +286,7 @@ const EditInvoicePage = () => {
                 <option value="">No project</option>
                 {projects.map((project) => (
                   <option key={project._id || project.id} value={project._id || project.id}>
-                    {project.name}
+                    {project.title || project.name}
                   </option>
                 ))}
               </Select>

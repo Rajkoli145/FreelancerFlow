@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, 
   Calendar, 
@@ -6,9 +7,12 @@ import {
   FileText, 
   Briefcase,
   TrendingUp,
+  TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
-  MoreVertical
+  MoreVertical,
+  Maximize,
+  X
 } from 'lucide-react';
 import {
   AreaChart,
@@ -20,16 +24,23 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import Card from '../../components/ui/Card';
+import StatCard from '../../components/ui/StatCard';
 import Loader from '../../components/ui/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { getProjects, getProjectStats } from '../../api/projectApi';
-import { getInvoices } from '../../api/invoiceApi';
-import { getTimeLogs } from '../../api/timeApi';
+import { getDashboardStats } from '../../api/dashboardApi';
+import '../../styles/neumorphism.css';
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, currencySymbol, formatAmount } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [earningsMenuOpen, setEarningsMenuOpen] = useState(false);
+  const [productivityMenuOpen, setProductivityMenuOpen] = useState(false);
+  const [earningsTimeRange, setEarningsTimeRange] = useState('6months');
+  const [productivityTimeRange, setProductivityTimeRange] = useState('4weeks');
+  const [fullscreenChart, setFullscreenChart] = useState(null);
+  const earningsMenuRef = useRef(null);
+  const productivityMenuRef = useRef(null);
   const [dashboardData, setDashboardData] = useState({
     stats: {
       totalEarnings: 0,
@@ -49,64 +60,22 @@ const DashboardPage = () => {
       try {
         setLoading(true);
         
-        // Fetch all data in parallel
-        const [projectsRes, invoicesRes, timeLogsRes, statsRes] = await Promise.all([
-          getProjects().catch(() => ({ projects: [] })),
-          getInvoices().catch(() => ({ invoices: [] })),
-          getTimeLogs().catch(() => ({ timeLogs: [] })),
-          getProjectStats().catch(() => ({ total: 0, active: 0, hoursThisMonth: 0 }))
-        ]);
-
-        const projects = Array.isArray(projectsRes) ? projectsRes : projectsRes.projects || [];
-        const invoices = Array.isArray(invoicesRes) ? invoicesRes : invoicesRes.invoices || [];
-        const timeLogs = Array.isArray(timeLogsRes) ? timeLogsRes : timeLogsRes.timeLogs || [];
-
-        // Calculate stats
-        const totalEarnings = invoices
-          .filter(inv => inv.status === 'paid' || inv.status === 'Paid')
-          .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
-
-        const now = new Date();
-        const thisMonthEarnings = invoices
-          .filter(inv => {
-            const invDate = new Date(inv.createdAt || inv.createdDate);
-            return (inv.status === 'paid' || inv.status === 'Paid') &&
-              invDate.getMonth() === now.getMonth() &&
-              invDate.getFullYear() === now.getFullYear();
-          })
-          .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
-
-        const pendingInvoicesCount = invoices.filter(inv => 
-          inv.status !== 'paid' && inv.status !== 'Paid'
-        ).length;
-
-        // Generate earnings chart data (last 6 months)
-        const earningsData = generateEarningsData(invoices);
+        // Fetch from new dashboard stats endpoint
+        const response = await getDashboardStats();
+        const data = response.data || response;
         
-        // Generate productivity data (last 4 weeks)
-        const productivityData = generateProductivityData(timeLogs);
-
-        // Get recent invoices and time logs
-        const recentInvoices = invoices
-          .sort((a, b) => new Date(b.createdAt || b.createdDate) - new Date(a.createdAt || a.createdDate))
-          .slice(0, 3);
-
-        const recentTimeLogs = timeLogs
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 3);
-
         setDashboardData({
-          stats: {
-            totalEarnings,
-            thisMonth: thisMonthEarnings,
-            hoursLogged: statsRes.hoursThisMonth || 0,
-            pendingInvoices: pendingInvoicesCount,
-            activeProjects: statsRes.active || 0
+          stats: data.stats || {
+            totalEarnings: 0,
+            thisMonth: 0,
+            hoursLogged: 0,
+            pendingInvoices: 0,
+            activeProjects: 0
           },
-          earningsData,
-          productivityData,
-          recentInvoices,
-          recentTimeLogs
+          earningsData: data.earningsData || [],
+          productivityData: data.productivityData || [],
+          recentInvoices: data.recentInvoices || [],
+          recentTimeLogs: data.recentTimeLogs || []
         });
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -118,51 +87,20 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, []);
 
-  const generateEarningsData = (invoices) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const now = new Date();
-    const data = [];
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (earningsMenuRef.current && !earningsMenuRef.current.contains(event.target)) {
+        setEarningsMenuOpen(false);
+      }
+      if (productivityMenuRef.current && !productivityMenuRef.current.contains(event.target)) {
+        setProductivityMenuOpen(false);
+      }
+    };
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthInvoices = invoices.filter(inv => {
-        const invDate = new Date(inv.createdAt || inv.createdDate);
-        return (inv.status === 'paid' || inv.status === 'Paid') &&
-          invDate.getMonth() === date.getMonth() &&
-          invDate.getFullYear() === date.getFullYear();
-      });
-      
-      const amount = monthInvoices.reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
-      data.push({ month: months[date.getMonth()], amount });
-    }
-
-    return data;
-  };
-
-  const generateProductivityData = (timeLogs) => {
-    const now = new Date();
-    const data = [];
-
-    for (let i = 3; i >= 0; i--) {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - (now.getDay() + 7 * i));
-      weekStart.setHours(0, 0, 0, 0);
-      
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-
-      const weekLogs = timeLogs.filter(log => {
-        const logDate = new Date(log.date);
-        return logDate >= weekStart && logDate <= weekEnd;
-      });
-
-      const hours = weekLogs.reduce((sum, log) => sum + (log.hours || 0), 0);
-      data.push({ week: `W${4 - i}`, hours: Math.round(hours * 10) / 10 });
-    }
-
-    return data;
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (loading) {
     return (
@@ -174,47 +112,50 @@ const DashboardPage = () => {
 
   const { stats, earningsData, productivityData, recentInvoices, recentTimeLogs } = dashboardData;
 
-  // Calculate percentage changes (mock for now - could store historical data)
+  const iconColors = {
+    'indigo': '#4A5FFF',
+    'green': '#22c55e',
+    'blue': '#3b82f6',
+    'orange': '#f97316',
+    'purple': '#a855f7'
+  };
+
   const statsConfig = [
     { 
       title: 'Total Earnings', 
-      value: `$${stats.totalEarnings.toLocaleString()}`, 
-      change: '+12.5%', 
-      trend: 'up', 
+      value: formatAmount(stats.totalEarnings), 
       icon: DollarSign,
-      color: 'indigo'
+      iconBg: iconColors.indigo
     },
     { 
-      title: 'This Month', 
-      value: `$${stats.thisMonth.toLocaleString()}`, 
-      change: '+8.2%', 
-      trend: 'up', 
-      icon: Calendar,
-      color: 'green'
+      title: 'This Month Revenue', 
+      value: formatAmount(stats.thisMonth), 
+      icon: TrendingUp,
+      iconBg: iconColors.green
+    },
+    { 
+      title: 'This Month Expenses', 
+      value: formatAmount(stats.expenses || 0), 
+      icon: TrendingDown,
+      iconBg: iconColors.orange
+    },
+    { 
+      title: 'Net Profit', 
+      value: formatAmount(stats.netProfit || 0), 
+      icon: DollarSign,
+      iconBg: (stats.netProfit || 0) >= 0 ? iconColors.green : '#ef4444'
     },
     { 
       title: 'Hours Logged', 
       value: `${stats.hoursLogged}h`, 
-      change: '+5.3%', 
-      trend: 'up', 
       icon: Clock,
-      color: 'blue'
-    },
-    { 
-      title: 'Pending Invoices', 
-      value: stats.pendingInvoices.toString(), 
-      change: stats.pendingInvoices > 0 ? `${stats.pendingInvoices}` : '0', 
-      trend: stats.pendingInvoices > 0 ? 'up' : 'down', 
-      icon: FileText,
-      color: 'orange'
+      iconBg: iconColors.blue
     },
     { 
       title: 'Active Projects', 
       value: stats.activeProjects.toString(), 
-      change: '+' + Math.max(0, stats.activeProjects - 10), 
-      trend: 'up', 
       icon: Briefcase,
-      color: 'purple'
+      iconBg: iconColors.purple
     },
   ];
 
@@ -228,131 +169,252 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="neu-container space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+      <div className="neu-card">
+        <h1 className="text-3xl font-bold neu-heading">
           Good afternoon, {user?.fullName?.split(' ')[0] || 'User'} 👋
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="neu-text-light mt-2">
           Here's your financial and productivity overview.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {statsConfig.map((stat, index) => (
-          <Card key={index} padding="default" className="hover:scale-105 transition-transform duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{stat.value}</h3>
-                <div className="flex items-center gap-1">
-                  {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className={`text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
-              <div className={`w-12 h-12 rounded-xl bg-${stat.color}-50 flex items-center justify-center`}>
-                <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
-              </div>
-            </div>
-          </Card>
+          <StatCard 
+            key={index}
+            icon={stat.icon}
+            title={stat.title}
+            value={stat.value}
+            iconBg={stat.iconBg}
+            trend={stat.trend}
+          />
         ))}
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Earnings Overview */}
-        <Card 
-          title="Earnings Overview" 
-          subtitle="Monthly revenue trend"
-          icon={TrendingUp}
-          headerAction={
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <MoreVertical className="w-5 h-5 text-gray-500" />
-            </button>
-          }
-        >
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={earningsData}>
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="neu-icon-inset">
+                <TrendingUp className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold neu-heading">Earnings Overview</h3>
+                <p className="text-sm neu-text-light">Monthly revenue trend</p>
+              </div>
+            </div>
+            <div className="relative" ref={earningsMenuRef}>
+              <button 
+                onClick={() => setEarningsMenuOpen(!earningsMenuOpen)}
+                className="neu-button p-2"
+              >
+                <MoreVertical className="w-5 h-5 neu-text-light" />
+              </button>
+              {earningsMenuOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-48 rounded-xl z-10"
+                  style={{
+                    backgroundColor: '#ecf0f3',
+                    boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
+                  }}
+                >
+                  <div className="py-2">
+                    <div className="px-3 py-1 text-xs font-semibold neu-text-light">Time Range</div>
+                    <button
+                      onClick={() => {
+                        setEarningsTimeRange('1month');
+                        setEarningsMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-white/40 ${
+                        earningsTimeRange === '1month' ? 'font-semibold' : ''
+                      }`}
+                      style={{ color: earningsTimeRange === '1month' ? 'var(--neu-primary)' : '#6b7280' }}
+                    >
+                      Last Month
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEarningsTimeRange('6months');
+                        setEarningsMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-white/40 ${
+                        earningsTimeRange === '6months' ? 'font-semibold' : ''
+                      }`}
+                      style={{ color: earningsTimeRange === '6months' ? 'var(--neu-primary)' : '#6b7280' }}
+                    >
+                      Last 6 Months
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEarningsTimeRange('1year');
+                        setEarningsMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-white/40 ${
+                        earningsTimeRange === '1year' ? 'font-semibold' : ''
+                      }`}
+                      style={{ color: earningsTimeRange === '1year' ? 'var(--neu-primary)' : '#6b7280' }}
+                    >
+                      Last Year
+                    </button>
+                    <div className="border-t border-gray-300 my-2"></div>
+                    <button
+                      onClick={() => {
+                        setFullscreenChart('earnings');
+                        setEarningsMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-white/40 flex items-center gap-2"
+                      style={{ color: '#6b7280' }}
+                    >
+                      <Maximize className="w-4 h-4" />
+                      Full Screen
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {earningsData && earningsData.length > 0 ? (
+          <ResponsiveContainer width="100%" aspect={2.2}>
+            <AreaChart data={earningsData}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#4B70E2" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#4B70E2" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <XAxis 
                   dataKey="month" 
-                  stroke="#9CA3AF" 
+                  stroke="#a0a5a8" 
                   style={{ fontSize: '12px' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis 
-                  stroke="#9CA3AF" 
+                  stroke="#a0a5a8" 
                   style={{ fontSize: '12px' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(value) => `$${value / 1000}k`}
+                  tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
                 />
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    backgroundColor: '#ecf0f3',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
                   }}
-                  formatter={(value) => [`$${value}`, 'Revenue']}
+                  formatter={(value) => [`${currencySymbol}${value}`, 'Revenue']}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="amount" 
-                  stroke="#6366F1" 
+                  stroke="#4B70E2" 
                   strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorAmount)" 
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-        </Card>
+          ) : (
+            <div className="flex items-center justify-center h-48 neu-text-light">
+              No earnings data available
+            </div>
+          )}
+        </div>
 
         {/* Weekly Productivity */}
-        <Card 
-          title="Weekly Productivity" 
-          subtitle="Hours logged this week"
-          icon={Clock}
-          headerAction={
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <MoreVertical className="w-5 h-5 text-gray-500" />
-            </button>
-          }
-        >
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={productivityData}>
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="neu-icon-inset">
+                <Clock className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold neu-heading">Weekly Productivity</h3>
+                <p className="text-sm neu-text-light">Hours logged this week</p>
+              </div>
+            </div>
+            <div className="relative" ref={productivityMenuRef}>
+              <button 
+                onClick={() => setProductivityMenuOpen(!productivityMenuOpen)}
+                className="neu-button p-2"
+              >
+                <MoreVertical className="w-5 h-5 neu-text-light" />
+              </button>
+              {productivityMenuOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-48 rounded-xl z-10"
+                  style={{
+                    backgroundColor: '#ecf0f3',
+                    boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
+                  }}
+                >
+                  <div className="py-2">
+                    <div className="px-3 py-1 text-xs font-semibold neu-text-light">Time Range</div>
+                    <button
+                      onClick={() => {
+                        setProductivityTimeRange('4weeks');
+                        setProductivityMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-white/40 ${
+                        productivityTimeRange === '4weeks' ? 'font-semibold' : ''
+                      }`}
+                      style={{ color: productivityTimeRange === '4weeks' ? 'var(--neu-primary)' : '#6b7280' }}
+                    >
+                      Last 4 Weeks
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProductivityTimeRange('12weeks');
+                        setProductivityMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-white/40 ${
+                        productivityTimeRange === '12weeks' ? 'font-semibold' : ''
+                      }`}
+                      style={{ color: productivityTimeRange === '12weeks' ? 'var(--neu-primary)' : '#6b7280' }}
+                    >
+                      Last 12 Weeks
+                    </button>
+                    <div className="border-t border-gray-300 my-2"></div>
+                    <button
+                      onClick={() => {
+                        setFullscreenChart('productivity');
+                        setProductivityMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-white/40 flex items-center gap-2"
+                      style={{ color: '#6b7280' }}
+                    >
+                      <Maximize className="w-4 h-4" />
+                      Full Screen
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {productivityData && productivityData.length > 0 ? (
+          <ResponsiveContainer width="100%" aspect={2.2}>
+            <BarChart data={productivityData}>
                 <defs>
                   <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#60A5FA" stopOpacity={0.6}/>
+                    <stop offset="5%" stopColor="#4B70E2" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#6b8aed" stopOpacity={0.6}/>
                   </linearGradient>
                 </defs>
                 <XAxis 
                   dataKey="week" 
-                  stroke="#9CA3AF" 
+                  stroke="#a0a5a8" 
                   style={{ fontSize: '12px' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis 
-                  stroke="#9CA3AF" 
+                  stroke="#a0a5a8" 
                   style={{ fontSize: '12px' }}
                   axisLine={false}
                   tickLine={false}
@@ -360,10 +422,10 @@ const DashboardPage = () => {
                 />
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    backgroundColor: '#ecf0f3',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
                   }}
                   formatter={(value) => [`${value} hours`, 'Time Logged']}
                 />
@@ -374,90 +436,236 @@ const DashboardPage = () => {
                 />
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 neu-text-light">
+              No productivity data available
+            </div>
+          )}
           </div>
-        </Card>
       </div>
 
       {/* Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Invoices */}
-        <Card 
-          title="Recent Invoices" 
-          subtitle="Latest billing activity"
-          icon={FileText}
-          headerAction={
-            <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="neu-icon-inset">
+                <FileText className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold neu-heading">Recent Invoices</h3>
+                <p className="text-sm neu-text-light">Latest billing activity</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => navigate('/invoices')} 
+              className="text-sm font-medium hover:underline" 
+              style={{ color: 'var(--neu-primary)' }}
+            >
               View all
             </button>
-          }
-        >
+          </div>
           <div className="space-y-3">
             {recentInvoices.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No recent invoices</p>
+              <p className="neu-text-light text-center py-4">No recent invoices</p>
             ) : (
               recentInvoices.map((invoice) => (
-                <div key={invoice._id || invoice.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{invoice.invoiceNumber || 'N/A'}</p>
-                    <p className="text-sm text-gray-500">{invoice.clientId?.name || 'No Client'}</p>
+                <div key={invoice._id || invoice.id} className="neu-card-inset p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium neu-heading">{invoice.invoiceNumber || 'N/A'}</p>
+                      <p className="text-sm neu-text-light">{invoice.clientId?.name || 'No Client'}</p>
+                    </div>
+                    <div className="text-right mr-4">
+                      <p className="font-semibold neu-heading">{formatAmount(invoice.amount || invoice.totalAmount || 0)}</p>
+                      <p className="text-xs neu-text-light">
+                        {new Date(invoice.createdAt || invoice.createdDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className={`neu-badge ${invoice.status === 'Paid' ? 'neu-badge-success' : invoice.status === 'Pending' ? 'neu-badge-warning' : 'neu-badge-danger'}`}>
+                      {invoice.status}
+                    </span>
                   </div>
-                  <div className="text-right mr-4">
-                    <p className="font-semibold text-gray-900">${(invoice.amount || invoice.totalAmount || 0).toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(invoice.createdAt || invoice.createdDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(invoice.status)}`}>
-                    {invoice.status}
-                  </span>
                 </div>
               ))
             )}
           </div>
-        </Card>
+        </div>
 
         {/* Recent Time Logs */}
-        <Card 
-          title="Recent Time Logs" 
-          subtitle="Latest tracked time"
-          icon={Clock}
-          headerAction={
-            <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="neu-icon-inset">
+                <Clock className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold neu-heading">Recent Time Logs</h3>
+                <p className="text-sm neu-text-light">Latest tracked time</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => navigate('/time')} 
+              className="text-sm font-medium hover:underline" 
+              style={{ color: 'var(--neu-primary)' }}
+            >
               View all
             </button>
-          }
-        >
+          </div>
           <div className="space-y-3">
             {recentTimeLogs.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No recent time logs</p>
+              <p className="neu-text-light text-center py-4">No recent time logs</p>
             ) : (
               recentTimeLogs.map((log, index) => (
-                <div key={log._id || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{log.projectId?.name || 'No Project'}</p>
-                    <p className="text-sm text-gray-500">{log.description || 'No description'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-indigo-600">{log.hours}h</p>
-                    <p className="text-xs text-gray-500">
-                      {(() => {
-                        const logDate = new Date(log.date);
-                        const today = new Date();
-                        const yesterday = new Date(today);
-                        yesterday.setDate(yesterday.getDate() - 1);
-                        
-                        if (logDate.toDateString() === today.toDateString()) return 'Today';
-                        if (logDate.toDateString() === yesterday.toDateString()) return 'Yesterday';
-                        return logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      })()}
-                    </p>
+                <div key={log._id || index} className="neu-card-inset p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium neu-heading">{log.projectId?.title || 'No Project'}</p>
+                      <p className="text-sm neu-text-light">{log.description || 'No description'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold" style={{ color: 'var(--neu-primary)' }}>{log.hours}h</p>
+                      <p className="text-xs neu-text-light">
+                        {(() => {
+                          const logDate = new Date(log.date);
+                          const today = new Date();
+                          const yesterday = new Date(today);
+                          yesterday.setDate(yesterday.getDate() - 1);
+                          
+                          if (logDate.toDateString() === today.toDateString()) return 'Today';
+                          if (logDate.toDateString() === yesterday.toDateString()) return 'Yesterday';
+                          return logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        })()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </Card>
+        </div>
       </div>
+
+      {/* Fullscreen Chart Modal */}
+      {fullscreenChart && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+          onClick={() => setFullscreenChart(null)}
+        >
+          <div 
+            className="w-full max-w-6xl neu-card p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="neu-icon-inset">
+                  {fullscreenChart === 'earnings' ? (
+                    <TrendingUp className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+                  ) : (
+                    <Clock className="w-5 h-5" style={{ color: 'var(--neu-primary)' }} />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold neu-heading">
+                    {fullscreenChart === 'earnings' ? 'Earnings Overview' : 'Weekly Productivity'}
+                  </h3>
+                  <p className="text-sm neu-text-light">
+                    {fullscreenChart === 'earnings' ? 'Monthly revenue trend' : 'Hours logged this week'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setFullscreenChart(null)}
+                className="neu-button p-2"
+              >
+                <X className="w-6 h-6 neu-text-light" />
+              </button>
+            </div>
+            <ResponsiveContainer width="100%" height={500}>
+              {fullscreenChart === 'earnings' ? (
+                <AreaChart data={earningsData}>
+                  <defs>
+                    <linearGradient id="colorAmountFull" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4B70E2" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4B70E2" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#a0a5a8" 
+                    style={{ fontSize: '14px' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    stroke="#a0a5a8" 
+                    style={{ fontSize: '14px' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ecf0f3',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
+                    }}
+                    formatter={(value) => [`${currencySymbol}${value}`, 'Revenue']}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#4B70E2" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorAmountFull)" 
+                  />
+                </AreaChart>
+              ) : (
+                <BarChart data={productivityData}>
+                  <defs>
+                    <linearGradient id="colorHoursFull" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4B70E2" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#6b8aed" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="week" 
+                    stroke="#a0a5a8" 
+                    style={{ fontSize: '14px' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    stroke="#a0a5a8" 
+                    style={{ fontSize: '14px' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) => `${value}h`}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ecf0f3',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
+                    }}
+                    formatter={(value) => [`${value} hours`, 'Time Logged']}
+                  />
+                  <Bar 
+                    dataKey="hours" 
+                    fill="url(#colorHoursFull)" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

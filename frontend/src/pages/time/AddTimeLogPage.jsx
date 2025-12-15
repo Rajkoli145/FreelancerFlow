@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import Button from "../../components/ui/Button";
-import Select from "../../components/ui/Select";
-import Input from "../../components/ui/Input";
+import NeuButton from "../../components/ui/NeuButton";
+import NeuInput from "../../components/ui/NeuInput";
 import { createTimeLog } from "../../api/timeApi";
 import { getProjects } from "../../api/projectApi";
+import '../../styles/neumorphism.css';
 
 const AddTimeLogPage = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const AddTimeLogPage = () => {
   const [description, setDescription] = useState("");
   const [hoursWorked, setHoursWorked] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [billable, setBillable] = useState(true); // Default to billable
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,7 +27,7 @@ const AddTimeLogPage = () => {
       try {
         setLoadingProjects(true);
         const response = await getProjects();
-        const projectList = Array.isArray(response) ? response : response.projects || [];
+        const projectList = response.data || [];
         setProjects(projectList);
       } catch (err) {
         console.error('Error fetching projects:', err);
@@ -60,6 +61,7 @@ const AddTimeLogPage = () => {
         description,
         hours: parseFloat(hoursWorked),
         date,
+        billable,
         notes: notes || undefined
       };
 
@@ -78,56 +80,69 @@ const AddTimeLogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7FB]">
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+    <div className="neu-container">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header Section */}
-        <div>
-          <button
-            onClick={() => navigate("/time")}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-3"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back to Time Logs</span>
-          </button>
-
-          <h1 className="text-3xl font-bold text-gray-900">Add Time Entry</h1>
-          <p className="text-gray-500 mt-1">
-            Record time spent on a project.
-          </p>
+        <div className="neu-card">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/time")}
+              className="neu-button p-2.5 rounded-xl transition-all duration-200"
+              style={{ boxShadow: '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff' }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.95)';
+                e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #c9ced6, inset -3px -3px 6px #ffffff';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff';
+              }}
+            >
+              <ArrowLeft className="w-5 h-5" style={{ color: '#6b7280' }} />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold neu-heading">Add Time Entry</h1>
+              <p className="neu-text-light mt-1">Record time spent on a project.</p>
+            </div>
+          </div>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
+        <div className="neu-card space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="neu-card-inset p-4" style={{ borderLeft: '4px solid #ef4444' }}>
+              <p className="text-sm" style={{ color: '#991b1b' }}>{error}</p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium neu-text mb-2">
               Select Project *
             </label>
-            <Select
+            <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
-              placeholder="Choose a project"
               disabled={loadingProjects || loading}
+              className="neu-input w-full"
             >
               <option value="">{loadingProjects ? 'Loading projects...' : 'Choose a project'}</option>
               {projects.map((project) => (
                 <option key={project._id || project.id} value={project._id || project.id}>
-                  {project.name}
+                  {project.title || project.name}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium neu-text mb-2">
               Description *
             </label>
-            <Input
+            <NeuInput
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -138,10 +153,10 @@ const AddTimeLogPage = () => {
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium neu-text mb-2">
                 Hours Worked *
               </label>
-              <Input
+              <NeuInput
                 type="number"
                 value={hoursWorked}
                 onChange={(e) => setHoursWorked(e.target.value)}
@@ -153,21 +168,44 @@ const AddTimeLogPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium neu-text mb-2">
                 Date *
               </label>
-              <input
+              <NeuInput
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 disabled={loading}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
+          {/* Billable Checkbox */}
+          <div className="neu-card-inset p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={billable}
+                onChange={(e) => setBillable(e.target.checked)}
+                disabled={loading}
+                className="w-5 h-5 rounded"
+                style={{ accentColor: 'var(--neu-primary)' }}
+              />
+              <div>
+                <span className="block text-sm font-medium neu-text">
+                  Billable Time
+                </span>
+                <span className="block text-xs neu-text-light mt-0.5">
+                  {billable 
+                    ? 'This time will be included in invoices' 
+                    : 'This time will NOT be invoiced (e.g., meetings, admin work)'}
+                </span>
+              </div>
+            </label>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium neu-text mb-2">
               Notes
             </label>
             <textarea
@@ -176,27 +214,33 @@ const AddTimeLogPage = () => {
               placeholder="Add any additional notes about this time entry..."
               rows={4}
               disabled={loading}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="neu-input w-full resize-none"
+              style={{
+                backgroundColor: '#eef1f6',
+                boxShadow: 'inset 3px 3px 6px #c9ced6, inset -3px -3px 6px #ffffff',
+                border: 'none',
+                outline: 'none',
+                color: '#374151'
+              }}
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-4">
-            <Button
+          <div className="flex items-center gap-3 pt-4" style={{ borderTop: '1px solid var(--neu-dark)' }}>
+            <NeuButton
               variant="primary"
               onClick={handleSaveEntry}
               disabled={loading || loadingProjects}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : 'Save Entry'}
-            </Button>
+            </NeuButton>
 
-            <button
+            <NeuButton
+              variant="default"
               onClick={handleCancel}
               disabled={loading}
-              className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
-            </button>
+            </NeuButton>
           </div>
         </div>
       </div>

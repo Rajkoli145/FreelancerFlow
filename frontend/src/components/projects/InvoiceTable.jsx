@@ -34,23 +34,25 @@ export default function InvoiceTable({ invoices = [] }) {
         <tbody>
           {invoices.map((invoice) => (
             <tr 
-              key={invoice.id} 
+              key={invoice._id || invoice.id} 
               className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
             >
               <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                {invoice.invoiceNumber}
+                {invoice.invoiceNumber || 'N/A'}
               </td>
               <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                ${invoice.amount.toLocaleString()}
+                ${(invoice.totalAmount || invoice.amount || 0).toLocaleString()}
               </td>
               <td className="py-3 px-4">
                 <StatusBadge status={invoice.status} />
               </td>
-              <td className="py-3 px-4 text-sm text-gray-600">{invoice.createdDate}</td>
+              <td className="py-3 px-4 text-sm text-gray-600">
+                {invoice.createdDate || new Date(invoice.createdAt || invoice.issueDate).toLocaleDateString()}
+              </td>
               <td className="py-3 px-4">
                 <div className="flex items-center justify-end">
                   <button
-                    onClick={() => navigate(`/invoices/${invoice.id}`)}
+                    onClick={() => navigate(`/invoices/${invoice._id || invoice.id}`)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 font-medium text-sm transition-colors"
                   >
                     <Eye className="w-4 h-4" />

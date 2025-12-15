@@ -21,6 +21,10 @@ import InvoicePaymentPage from "./pages/invoices/InvoicePaymentPage";
 import TimeLogsPage from "./pages/time/TimeLogsPage";
 import AddTimeLogPage from "./pages/time/AddTimeLogPage";
 import EditTimeLogPage from "./pages/time/EditTimeLogPage";
+import ExpensesPage from "./pages/expenses/ExpensesPage";
+import AddExpensePage from "./pages/expenses/AddExpensePage";
+import EditExpensePage from "./pages/expenses/EditExpensePage";
+import ReportsPage from "./pages/reports/ReportsPage";
 import SettingsPage from "./pages/settings/SettingsPage";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
 import NotFoundPage from "./pages/errors/NotFoundPage";
@@ -227,6 +231,52 @@ createRoot(document.getElementById("root")).render(
             <ProtectedRoute>
               <AppLayout>
                 <InvoicePaymentPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Expenses Routes */}
+        <Route 
+          path="/expenses" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ExpensesPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/expenses/new" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <AddExpensePage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/expenses/edit/:id" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <EditExpensePage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Reports Route */}
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ReportsPage />
               </AppLayout>
             </ProtectedRoute>
           } 

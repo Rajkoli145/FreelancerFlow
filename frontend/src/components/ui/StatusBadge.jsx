@@ -1,15 +1,21 @@
 import React from 'react';
 
 const StatusBadge = ({ status, size = 'md' }) => {
+  // Normalize status to lowercase for comparison
+  const normalizedStatus = status?.toLowerCase() || 'active';
+  
   const statusStyles = {
-    Active: 'bg-green-100 text-green-700 border-green-200',
-    Completed: 'bg-gray-100 text-gray-700 border-gray-200',
-    'On Hold': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    Overdue: 'bg-red-100 text-red-700 border-red-200',
-    Paid: 'bg-green-100 text-green-700 border-green-200',
-    Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    Draft: 'bg-gray-100 text-gray-700 border-gray-200',
-    Cancelled: 'bg-red-100 text-red-700 border-red-200',
+    active: 'bg-green-100 text-green-700 border-green-200',
+    completed: 'bg-gray-100 text-gray-700 border-gray-200',
+    on_hold: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    cancelled: 'bg-red-100 text-red-700 border-red-200',
+    overdue: 'bg-red-100 text-red-700 border-red-200',
+    paid: 'bg-green-100 text-green-700 border-green-200',
+    pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    draft: 'bg-gray-100 text-gray-700 border-gray-200',
+    sent: 'bg-blue-100 text-blue-700 border-blue-200',
+    viewed: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    partial: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   };
 
   const sizeStyles = {
@@ -18,14 +24,19 @@ const StatusBadge = ({ status, size = 'md' }) => {
     lg: 'px-4 py-1.5 text-base',
   };
 
-  const statusClass = statusStyles[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+  const statusClass = statusStyles[normalizedStatus] || 'bg-gray-100 text-gray-700 border-gray-200';
   const sizeClass = sizeStyles[size];
+  
+  // Display text: capitalize first letter, replace underscores with spaces
+  const displayStatus = normalizedStatus
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
 
   return (
     <span 
       className={`inline-flex items-center font-semibold rounded-full border ${statusClass} ${sizeClass}`}
     >
-      {status}
+      {displayStatus}
     </span>
   );
 };

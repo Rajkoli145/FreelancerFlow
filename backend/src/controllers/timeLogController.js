@@ -78,3 +78,45 @@ exports.deleteTimeLog = async (req, res, next) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+/**
+ * Get unbilled time logs (billable = true, invoiced = false)
+ */
+exports.getUnbilledTimeLogs = async (req, res, next) => {
+  try {
+    const { projectId } = req.query;
+    
+    const query = {
+      userId: req.user._id,
+      billable: true,
+      invoiced: false
+    };
+    
+    if (projectId) {
+      query.projectId = projectId;
+    }
+    
+    const logs = await TimeLog.find(query)
+      .populate('projectId', 'title hourlyRate clientId')
+      .sort({ date: -1 });
+    
+    // Calculate total unbilled hours and amount
+    const totalHours = logs.reduce((sum, log) => sum + log.hours, 0);
+    const totalAmount = logs.reduce((sum, log) => {
+      const rate = log.projectId?.hourlyRate || 0;
+      return sum + (log.hours * rate);
+    }, 0);
+    
+    res.json({ 
+      success: true, 
+      data: logs,
+      summary: {
+        totalHours,
+        totalAmount,
+        count: logs.length
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};

@@ -14,6 +14,11 @@ const projectRoutes = require('./routes/projectRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const timeLogRoutes = require('./routes/timeLogRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -34,7 +39,7 @@ app.use(cors({
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 50, // 50 requests per window (increased for development)
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
@@ -54,7 +59,8 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 })
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for profile pictures
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
@@ -64,6 +70,11 @@ app.use('/api/project', generalLimiter, projectRoutes);
 app.use('/api/client', generalLimiter, clientRoutes);
 app.use('/api/timelog', generalLimiter, timeLogRoutes);
 app.use('/api/invoice', generalLimiter, invoiceRoutes);
+app.use('/api/payment', generalLimiter, paymentRoutes);
+app.use('/api/dashboard', generalLimiter, dashboardRoutes);
+app.use('/api/notification', generalLimiter, notificationRoutes);
+app.use('/api/expense', generalLimiter, expenseRoutes);
+app.use('/api/report', generalLimiter, reportRoutes);
 
 // 4. health check
 app.get('/health', (req, res) => res.json({ success: true, time: new Date().toISOString() }));

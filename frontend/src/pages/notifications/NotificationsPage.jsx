@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   FileText,
@@ -10,233 +10,269 @@ import {
   Clock,
   DollarSign,
 } from "lucide-react";
+import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../../api/notificationApi';
+import Loader from '../../components/ui/Loader';
+import '../../styles/neumorphism.css';
 
 const NotificationsPage = () => {
   const [activeFilter, setActiveFilter] = useState("All");
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock Notifications Data
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      category: "Invoices",
-      icon: DollarSign,
-      iconColor: "text-green-600",
-      iconBg: "bg-green-50",
-      title: "Invoice INV-002 marked as paid",
-      description: "Payment received from TechStart Inc",
-      timestamp: "2 hours ago",
-      isRead: false,
-    },
-    {
-      id: 2,
-      category: "Projects",
-      icon: Briefcase,
-      iconColor: "text-indigo-600",
-      iconBg: "bg-indigo-50",
-      title: "New project milestone completed",
-      description: "Website Redesign - Phase 2 completed",
-      timestamp: "5 hours ago",
-      isRead: false,
-    },
-    {
-      id: 3,
-      category: "Clients",
-      icon: Users,
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50",
-      title: "New message from Acme Corp",
-      description: "Please review the latest design mockups",
-      timestamp: "1 day ago",
-      isRead: true,
-    },
-    {
-      id: 4,
-      category: "Invoices",
-      icon: AlertCircle,
-      iconColor: "text-red-600",
-      iconBg: "bg-red-50",
-      title: "Invoice INV-003 is overdue",
-      description: "Payment from Design Co is 5 days late",
-      timestamp: "2 days ago",
-      isRead: false,
-    },
-    {
-      id: 5,
-      category: "System",
-      icon: Settings,
-      iconColor: "text-gray-600",
-      iconBg: "bg-gray-50",
-      title: "System maintenance scheduled",
-      description: "Scheduled downtime on Dec 15, 2025 at 2:00 AM",
-      timestamp: "3 days ago",
-      isRead: true,
-    },
-    {
-      id: 6,
-      category: "Projects",
-      icon: Briefcase,
-      iconColor: "text-indigo-600",
-      iconBg: "bg-indigo-50",
-      title: "Project deadline approaching",
-      description: "Mobile App project due in 3 days",
-      timestamp: "4 days ago",
-      isRead: true,
-    },
-    {
-      id: 7,
-      category: "Invoices",
-      icon: FileText,
-      iconColor: "text-yellow-600",
-      iconBg: "bg-yellow-50",
-      title: "New invoice created",
-      description: "Invoice INV-004 created for Client One",
-      timestamp: "5 days ago",
-      isRead: true,
-    },
-  ]);
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
-  const filters = ["All", "Invoices", "Projects", "Clients", "System"];
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getNotifications();
+      const data = response.data || [];
+      setNotifications(data);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError('Failed to load notifications');
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filters = ["All", "Invoice", "Payment", "Project", "System"];
+
+  // Map notification type to icon and styling
+  const getNotificationIcon = (type) => {
+    switch(type) {
+      case 'invoice_paid':
+      case 'invoice_overdue':
+      case 'invoice_sent':
+        return { Icon: FileText, color: "text-blue-600", bg: "bg-blue-50" };
+      case 'payment_received':
+        return { Icon: DollarSign, color: "text-green-600", bg: "bg-green-50" };
+      case 'project_deadline':
+        return { Icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50" };
+      case 'system':
+        return { Icon: Settings, color: "text-gray-600", bg: "bg-gray-50" };
+      default:
+        return { Icon: Bell, color: "text-gray-600", bg: "bg-gray-50" };
+    }
+  };
+
+  // Map backend notifications to frontend format
+  const formatNotifications = (notifications) => {
+    return notifications.map(notif => {
+      const { Icon, color, bg } = getNotificationIcon(notif.type);
+      
+      // Determine category for filtering
+      let category = 'System';
+      if (notif.type.includes('invoice')) category = 'Invoice';
+      else if (notif.type.includes('payment')) category = 'Payment';
+      else if (notif.type.includes('project')) category = 'Project';
+
+      return {
+        id: notif._id,
+        category,
+        icon: Icon,
+        iconColor: color,
+        iconBg: bg,
+        title: notif.title,
+        description: notif.description,
+        timestamp: formatTimestamp(notif.createdAt),
+        isRead: notif.isRead,
+      };
+    });
+  };
+
+  const formatTimestamp = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+  };
+
+  const formattedNotifications = formatNotifications(notifications);
 
   const filteredNotifications =
     activeFilter === "All"
-      ? notifications
-      : notifications.filter((notif) => notif.category === activeFilter);
+      ? formattedNotifications
+      : formattedNotifications.filter((notif) => notif.category === activeFilter);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map((notif) => ({ ...notif, isRead: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+    }
   };
 
-  const handleNotificationClick = (id) => {
-    setNotifications(
-      notifications.map((notif) =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const handleNotificationClick = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7FB]">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
-        {/* Header Section */}
+    <div className="neu-container space-y-6">
+      {/* Header Section */}
+      <div className="neu-card">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold neu-heading flex items-center gap-3">
               Notifications
               {unreadCount > 0 && (
-                <span className="bg-indigo-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                <span className="neu-badge-primary">
                   {unreadCount} new
                 </span>
               )}
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="neu-text-light mt-1">
               Stay updated on your recent activity.
             </p>
           </div>
           <button
             onClick={handleMarkAllAsRead}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium rounded-lg transition-colors shadow-sm"
+            className="neu-button flex items-center gap-2 px-4 py-2.5 font-medium"
           >
             <CheckCircle2 className="w-4 h-4" />
             Mark All as Read
           </button>
         </div>
+      </div>
 
-        {/* Filter Bar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 flex-wrap">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  activeFilter === filter
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
+      {/* Filter Bar */}
+      <div className="neu-card">
+        <div className="flex items-center gap-3 flex-wrap">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                activeFilter === filter
+                  ? "neu-button-primary"
+                  : "neu-button"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Notifications List */}
-        {filteredNotifications.length > 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
-            {filteredNotifications.map((notification) => {
-              const Icon = notification.icon;
-              return (
-                <div
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification.id)}
-                  className={`p-5 flex items-start gap-4 cursor-pointer transition-all hover:bg-gray-50 ${
-                    !notification.isRead ? "bg-indigo-50/30" : ""
-                  }`}
-                >
-                  {/* Status Dot */}
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full ${
-                        notification.isRead ? "bg-gray-300" : "bg-indigo-600"
-                      }`}
-                    />
-                  </div>
-
-                  {/* Icon */}
+      {/* Notifications List */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Loader />
+        </div>
+      ) : error ? (
+        <div className="neu-card">
+          <p className="text-red-600 text-center py-8">{error}</p>
+        </div>
+      ) : filteredNotifications.length > 0 ? (
+        <div className="neu-card overflow-hidden">
+          {filteredNotifications.map((notification, index) => {
+            const Icon = notification.icon;
+            return (
+              <div
+                key={notification.id}
+                onClick={() => handleNotificationClick(notification.id)}
+                className="p-5 flex items-start gap-4 cursor-pointer transition-all hover:opacity-90"
+                style={{
+                  borderBottom: index < filteredNotifications.length - 1 ? '1px solid var(--neu-dark)' : 'none',
+                  backgroundColor: !notification.isRead ? 'rgba(75, 112, 226, 0.03)' : 'transparent'
+                }}
+              >
+                {/* Status Dot */}
+                <div className="flex-shrink-0 mt-1">
                   <div
-                    className={`flex-shrink-0 w-12 h-12 ${notification.iconBg} rounded-lg flex items-center justify-center`}
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{
+                      backgroundColor: notification.isRead ? '#d1d9e6' : 'var(--neu-primary)'
+                    }}
+                  />
+                </div>
+
+                {/* Icon */}
+                <div
+                  className="flex-shrink-0 w-12 h-12 neu-icon flex items-center justify-center"
+                  style={{
+                    backgroundColor: notification.iconBg.includes('green') ? 'rgba(34, 197, 94, 0.1)' :
+                                     notification.iconBg.includes('indigo') ? 'rgba(75, 112, 226, 0.1)' :
+                                     notification.iconBg.includes('blue') ? 'rgba(59, 130, 246, 0.1)' :
+                                     notification.iconBg.includes('red') ? 'rgba(239, 68, 68, 0.1)' :
+                                     notification.iconBg.includes('yellow') ? 'rgba(234, 179, 8, 0.1)' :
+                                     'rgba(107, 114, 128, 0.1)'
+                  }}
+                >
+                  <Icon className="w-6 h-6" style={{
+                    color: notification.iconColor.includes('green') ? '#22c55e' :
+                           notification.iconColor.includes('indigo') ? 'var(--neu-primary)' :
+                           notification.iconColor.includes('blue') ? '#3b82f6' :
+                           notification.iconColor.includes('red') ? '#ef4444' :
+                           notification.iconColor.includes('yellow') ? '#eab308' :
+                           '#6b7280'
+                  }} />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className={`text-sm font-semibold mb-1 ${
+                      notification.isRead ? "neu-text" : "neu-heading"
+                    }`}
                   >
-                    <Icon className={`w-6 h-6 ${notification.iconColor}`} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className={`text-sm font-semibold mb-1 ${
-                        notification.isRead ? "text-gray-700" : "text-gray-900"
-                      }`}
-                    >
-                      {notification.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-2">
-                      {notification.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <Clock className="w-3.5 h-3.5" />
-                      {notification.timestamp}
-                    </div>
-                  </div>
-
-                  {/* Category Badge */}
-                  <div className="flex-shrink-0">
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-                      {notification.category}
-                    </span>
+                    {notification.title}
+                  </h3>
+                  <p className="text-sm neu-text-light mb-2">
+                    {notification.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs neu-text-light">
+                    <Clock className="w-3.5 h-3.5" />
+                    {notification.timestamp}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* Empty State */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16">
-            <div className="text-center max-w-md mx-auto">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-10 h-10 text-gray-400" />
+
+                {/* Category Badge */}
+                <div className="flex-shrink-0">
+                  <span className="neu-badge">
+                    {notification.category}
+                  </span>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No notifications yet
-              </h3>
-              <p className="text-gray-500">
-                You're all caught up! When you receive new notifications, they'll
-                appear here.
-              </p>
+            );
+          })}
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="neu-card p-16">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-20 h-20 neu-icon-inset rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-10 h-10 neu-text-light" />
             </div>
+            <h3 className="text-xl font-semibold neu-heading mb-2">
+              No notifications yet
+            </h3>
+            <p className="neu-text">
+              You're all caught up! When you receive new notifications, they'll
+              appear here.
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
