@@ -11,10 +11,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
   // Global Firebase auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (isProcessingAuth) return;
+      setIsProcessingAuth(true);
       if (firebaseUser) {
         try {
           // Get Firebase ID token
@@ -43,6 +46,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('authToken');
       }
       setLoading(false);
+      setIsProcessingAuth(false);
     });
     return () => unsubscribe();
   }, []);

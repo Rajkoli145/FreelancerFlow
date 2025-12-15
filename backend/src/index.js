@@ -89,6 +89,7 @@ if (
 // ---
 
 const app = express();
+app.set('trust proxy', 1);
 // 1. connect to DB
 connectDB();
 
