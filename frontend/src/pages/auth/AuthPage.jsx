@@ -100,8 +100,6 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
-
-    // Validation
     const newErrors = {};
     if (!signUpData.fullName.trim()) {
       newErrors.fullName = 'Name is required';
