@@ -93,7 +93,7 @@ const app = express();
 connectDB();
 
 // 2. global middlewares
-app.use(helmet());
+app.use(helmet({ crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } }));
 
 // CORS - whitelist only trusted origins
 const allowedOrigins = [

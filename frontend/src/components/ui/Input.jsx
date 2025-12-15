@@ -15,6 +15,8 @@ const Input = ({
   id,
   className = '',
   showPasswordToggle = false,
+  autoComplete,
+
   ...props 
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +48,7 @@ const Input = ({
           placeholder={placeholder}
           disabled={disabled}
           required={required}
+          autoComplete={autoComplete}
           className={`
             w-full px-4 py-2.5 rounded-lg border transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-offset-0
