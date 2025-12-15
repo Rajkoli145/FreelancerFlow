@@ -8,9 +8,12 @@ const bcrypt = require('bcryptjs');
 
 exports.firebaseAuth = async (req, res) => {
   try {
-    const { idToken, provider, fullName, email, photoURL } = req.body;
-
-    console.log('🔥 Firebase auth request received:', { provider, email });
+    // Get Firebase ID token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'No token provided' });
+    }
+    const idToken = authHeader.split(' ')[1];
 
     // Verify the Firebase ID token
     let decodedToken;
@@ -26,7 +29,14 @@ exports.firebaseAuth = async (req, res) => {
       });
     }
 
+    // Extract user info from decoded token
     const firebaseUid = decodedToken.uid;
+    const email = decodedToken.email;
+    const fullName = decodedToken.name || email?.split('@')[0];
+    const photoURL = decodedToken.picture;
+    const provider = decodedToken.firebase?.sign_in_provider || 'google';
+
+    console.log('🔥 Firebase auth request received:', { provider, email });
 
     // Check if user exists
     let user = await User.findOne({ email });
