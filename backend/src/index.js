@@ -23,34 +23,70 @@ const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 
 // Initialize Firebase Admin
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+// Firebase Admin initialization for Render: use individual env vars for each field
+if (
+  process.env.FIREBASE_TYPE &&
+  process.env.FIREBASE_PROJECT_ID &&
+  process.env.FIREBASE_PRIVATE_KEY_ID &&
+  process.env.FIREBASE_PRIVATE_KEY &&
+  process.env.FIREBASE_CLIENT_EMAIL &&
+  process.env.FIREBASE_CLIENT_ID &&
+  process.env.FIREBASE_AUTH_URI &&
+  process.env.FIREBASE_TOKEN_URI &&
+  process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL &&
+  process.env.FIREBASE_CLIENT_X509_CERT_URL &&
+  process.env.FIREBASE_UNIVERSE_DOMAIN
+) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    if (!serviceAccount.private_key) {
-      throw new Error('private_key missing in FIREBASE_SERVICE_ACCOUNT');
-    }
-    // Log first 30 chars of private_key for debug (safe)
+    const serviceAccount = {
+      type: process.env.FIREBASE_TYPE,
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+      private_key: process.env.FIREBASE_PRIVATE_KEY,
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID,
+      auth_uri: process.env.FIREBASE_AUTH_URI,
+      token_uri: process.env.FIREBASE_TOKEN_URI,
+      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+      universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+    };
     console.log('Firebase private_key starts with:', serviceAccount.private_key.substring(0, 30));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
-    console.log('✅ Firebase Admin initialized');
+    console.log('✅ Firebase Admin initialized (Render env vars)');
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error);
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      try {
-        const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        console.log('FIREBASE_SERVICE_ACCOUNT parsed, private_key length:', parsed.private_key ? parsed.private_key.length : 'none');
-      } catch (e) {
-        console.error('FIREBASE_SERVICE_ACCOUNT JSON parse error:', e);
-      }
-    } else {
-      console.error('FIREBASE_SERVICE_ACCOUNT is undefined');
-    }
+    console.error('❌ Firebase Admin initialization failed (Render env vars):', error);
+  }
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // fallback for local/dev: use JSON string
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized (FIREBASE_SERVICE_ACCOUNT)');
+  } catch (error) {
+    console.error('❌ Firebase Admin initialization failed (FIREBASE_SERVICE_ACCOUNT):', error);
   }
 } else {
-  console.error('FIREBASE_SERVICE_ACCOUNT is not set in environment');
+  console.error('❌ Firebase Admin not initialized: missing environment variables');
 }
+// ---
+// Render.com: Set these environment variables in your Render dashboard (Environment > Add Environment Variable):
+// FIREBASE_TYPE=service_account
+// FIREBASE_PROJECT_ID=your_project_id
+// FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+// FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEv... (use actual newlines, not \n)
+// FIREBASE_CLIENT_EMAIL=...
+// FIREBASE_CLIENT_ID=...
+// FIREBASE_AUTH_URI=...
+// FIREBASE_TOKEN_URI=...
+// FIREBASE_AUTH_PROVIDER_X509_CERT_URL=...
+// FIREBASE_CLIENT_X509_CERT_URL=...
+// FIREBASE_UNIVERSE_DOMAIN=googleapis.com
+// ---
 
 const app = express();
 // 1. connect to DB
