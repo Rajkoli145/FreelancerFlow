@@ -1,6 +1,9 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
 import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../config/firebase';
+import axiosInstance from '../api/axioInstance';
 
 const AuthContext = createContext(null);
 
@@ -9,29 +12,39 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if user is logged in on mount
+  // Global Firebase auth state listener
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      
-      if (token) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
         try {
-          const response = await getMe();
-          if (response.success) {
-            setUser(response.data);
+          // Get Firebase ID token
+          const idToken = await firebaseUser.getIdToken();
+          // Exchange for app JWT
+          const res = await axiosInstance.post('/auth/firebase', {}, {
+            headers: { Authorization: `Bearer ${idToken}` }
+          });
+          if (res.data && res.data.token && res.data.user) {
+            localStorage.setItem('authToken', res.data.token);
+            setUser(res.data.user);
             setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+            localStorage.removeItem('authToken');
           }
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          localStorage.removeItem('authToken');
+        } catch (err) {
+          setUser(null);
           setIsAuthenticated(false);
+          localStorage.removeItem('authToken');
         }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('authToken');
       }
-      
       setLoading(false);
-    };
-
-    checkAuth();
+    });
+    return () => unsubscribe();
   }, []);
 
   const login = async (email, password) => {
@@ -76,7 +89,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     localStorage.removeItem('authToken');
     setUser(null);
     setIsAuthenticated(false);

@@ -148,29 +148,9 @@ const AuthPage = () => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     setErrors({});
-    
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      
-      // Get Firebase ID token
-      const idToken = await user.getIdToken();
-      
-      // Send to backend
-      const response = await axiosInstance.post('/auth/firebase', {
-        idToken,
-        provider: 'google',
-        fullName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL
-      });
-
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/dashboard');
-        window.location.reload(); // Refresh to update auth context
-      }
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged will handle the rest
     } catch (error) {
       console.error('Google auth error:', error);
       setErrors({ general: error.message || 'Google authentication failed' });
@@ -182,29 +162,9 @@ const AuthPage = () => {
   const handleGithubAuth = async () => {
     setLoading(true);
     setErrors({});
-    
     try {
-      const result = await signInWithPopup(auth, githubProvider);
-      const user = result.user;
-      
-      // Get Firebase ID token
-      const idToken = await user.getIdToken();
-      
-      // Send to backend
-      const response = await axiosInstance.post('/auth/firebase', {
-        idToken,
-        provider: 'github',
-        fullName: user.displayName || user.email.split('@')[0],
-        email: user.email,
-        photoURL: user.photoURL
-      });
-
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/dashboard');
-        window.location.reload(); // Refresh to update auth context
-      }
+      await signInWithPopup(auth, githubProvider);
+      // onAuthStateChanged will handle the rest
     } catch (error) {
       console.error('GitHub auth error:', error);
       setErrors({ general: error.message || 'GitHub authentication failed' });
