@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
 import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -11,13 +11,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
+  const isProcessingAuth = useRef(false);
 
   // Global Firebase auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (isProcessingAuth) return;
-      setIsProcessingAuth(true);
+      if (isProcessingAuth.current) return;
+      isProcessingAuth.current = true;
       if (firebaseUser) {
         try {
           // Get Firebase ID token
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('authToken');
       }
       setLoading(false);
-      setIsProcessingAuth(false);
+      isProcessingAuth.current = false;
     });
     return () => unsubscribe();
   }, []);
