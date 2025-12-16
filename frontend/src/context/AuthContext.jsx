@@ -14,12 +14,11 @@ export const AuthProvider = ({ children }) => {
   const isProcessingAuth = useRef(false);
 
   useEffect(() => {
-    // This function handles the result of a redirect sign-in
-    const processRedirect = async () => {
+    const handleAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          // This means the user has just signed in via redirect
+          // User has just signed in via redirect.
           const idToken = await result.user.getIdToken();
           const res = await axiosInstance.post('/auth/firebase', {}, {
             headers: { Authorization: `Bearer ${idToken}` },
@@ -30,42 +29,41 @@ export const AuthProvider = ({ children }) => {
             setUser(res.data.user);
             setIsAuthenticated(true);
           }
+        } else {
+          // This is a page refresh, not a redirect.
+          // Check if user is already logged in.
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const response = await getMe();
+            if (response.success) {
+              setUser(response.data.user);
+              setIsAuthenticated(true);
+            }
+          }
         }
       } catch (error) {
-        console.error('Error processing redirect result:', error);
-        // Clear any partial state
+        console.error('Authentication error:', error);
+        localStorage.removeItem('authToken');
+        setUser(null);
+        setIsAuthenticated(false);
+        await signOut(auth).catch(() => {}); // Attempt to sign out from Firebase
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleAuth();
+
+    // Set up a listener for subsequent auth state changes (e.g., manual sign-out)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
         localStorage.removeItem('authToken');
         setUser(null);
         setIsAuthenticated(false);
       }
-    };
-
-    // First, process any redirect result. Then, set up the state listener.
-    processRedirect().then(() => {
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-          // User is signed in. Ensure local state is consistent.
-          const token = localStorage.getItem('authToken');
-          if (token && !isAuthenticated) {
-            // This handles the case of a page refresh for an already logged-in user
-            getMe().then(response => {
-              if (response.success) {
-                setUser(response.data.user);
-                setIsAuthenticated(true);
-              }
-            });
-          }
-        } else {
-          // User is signed out
-          localStorage.removeItem('authToken');
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-        setLoading(false); // Set loading to false after initial check
-      });
-
-      return () => unsubscribe();
     });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email, password) => {
