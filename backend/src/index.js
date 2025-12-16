@@ -97,7 +97,7 @@ app.set('trust proxy', 1);
 connectDB();
 
 // 2. global middlewares
-app.use(helmet({ crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } }));
+app.use(helmet({ crossOriginOpenerPolicy: false }));
 
 // CORS - whitelist only trusted origins
 const allowedOrigins = [
