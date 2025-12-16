@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Github, Linkedin } from 'lucide-react';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../../config/firebase';
 import axiosInstance from '../../api/axioInstance';
 import './auth.css';
@@ -147,19 +147,11 @@ const AuthPage = () => {
     setLoading(true);
     setErrors({});
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-
-      // Authenticate with your backend
-      await axiosInstance.post('/auth/firebase', {}, {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-
-      // The onAuthStateChanged listener in AuthContext will handle the navigation
+      await signInWithRedirect(auth, googleProvider);
+      // After redirect, the result is handled in AuthContext
     } catch (error) {
       console.error('Google auth error:', error);
       setErrors({ general: error.message || 'Google authentication failed' });
-    } finally {
       setLoading(false);
     }
   };
@@ -168,19 +160,11 @@ const AuthPage = () => {
     setLoading(true);
     setErrors({});
     try {
-      const result = await signInWithPopup(auth, githubProvider);
-      const idToken = await result.user.getIdToken();
-
-      // Authenticate with your backend
-      await axiosInstance.post('/auth/firebase', {}, {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-
-      // The onAuthStateChanged listener in AuthContext will handle the navigation
+      await signInWithRedirect(auth, githubProvider);
+      // After redirect, the result is handled in AuthContext
     } catch (error) {
       console.error('GitHub auth error:', error);
       setErrors({ general: error.message || 'GitHub authentication failed' });
-    } finally {
       setLoading(false);
     }
   };

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
 import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import axiosInstance from '../api/axioInstance';
 
@@ -13,40 +13,68 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const isProcessingAuth = useRef(false);
 
-  // Global Firebase auth state listener
+  // This effect handles the result of a successful redirect sign-in
+  useEffect(() => {
+    const processRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setLoading(true);
+          const idToken = await result.user.getIdToken();
+          const res = await axiosInstance.post('/auth/firebase', {}, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+
+          if (res.data?.token && res.data?.user) {
+            localStorage.setItem('authToken', res.data.token);
+            setUser(res.data.user);
+            setIsAuthenticated(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+        // Clear session if backend auth fails
+        localStorage.removeItem('authToken');
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        // This will run regardless of whether there was a redirect result
+        setLoading(false);
+      }
+    };
+
+    processRedirectResult();
+  }, []);
+
+  // This effect handles session persistence and user state synchronization
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // User is signed in with Firebase. Now, verify with our backend.
-        // This will also run after a successful popup sign-in, effectively syncing the state.
-        try {
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            // If we already have a JWT, fetch user data
+      if (firebaseUser && !isAuthenticated) {
+        // If there's a Firebase user but we are not yet authenticated in our app,
+        // it's likely a page refresh. We verify the session with our backend.
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          try {
             const response = await getMe();
             if (response.success) {
               setUser(response.data.user);
               setIsAuthenticated(true);
-            } else {
-              // Token is invalid, sign out
-              await signOut(auth);
             }
+          } catch (error) {
+            // Token is invalid, sign out
+            await signOut(auth);
           }
-        } catch (error) {
-          // Ignore error, user will be logged out
-          await signOut(auth);
         }
-      } else {
+      } else if (!firebaseUser) {
         // User is signed out
         localStorage.removeItem('authToken');
         setUser(null);
         setIsAuthenticated(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
 
   const login = async (email, password) => {
     try {
