@@ -24,6 +24,8 @@ const errorHandler = require('./middleware/errorMiddleware');
 
 // Initialize Firebase Admin
 // Firebase Admin initialization for Render: use individual env vars for each field
+// Initialize Firebase Admin
+// Recommended: Use individual environment variables for all environments
 if (
   process.env.FIREBASE_TYPE &&
   process.env.FIREBASE_PROJECT_ID &&
@@ -42,33 +44,34 @@ if (
       type: process.env.FIREBASE_TYPE,
       project_id: process.env.FIREBASE_PROJECT_ID,
       private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY,
+      private_key: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
       client_email: process.env.FIREBASE_CLIENT_EMAIL,
       client_id: process.env.FIREBASE_CLIENT_ID,
       auth_uri: process.env.FIREBASE_AUTH_URI,
       token_uri: process.env.FIREBASE_TOKEN_URI,
       auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
       client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-      universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+      universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
     };
-    console.log('Firebase private_key starts with:', serviceAccount.private_key.substring(0, 30));
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+      credential: admin.credential.cert(serviceAccount),
     });
-    console.log('✅ Firebase Admin initialized (Render env vars)');
+    console.log('✅ Firebase Admin initialized (from individual env vars)');
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed (Render env vars):', error);
+    console.error('❌ Firebase Admin initialization failed (from individual env vars):', error);
   }
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  // fallback for local/dev: use JSON string
+  // Fallback for local/dev: use JSON string
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    // Correctly format the private key by replacing escaped newlines
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
+    const serviceAccount = JSON.parse(serviceAccountString);
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+      credential: admin.credential.cert(serviceAccount),
     });
-    console.log('✅ Firebase Admin initialized (FIREBASE_SERVICE_ACCOUNT)');
+    console.log('✅ Firebase Admin initialized (from FIREBASE_SERVICE_ACCOUNT)');
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed (FIREBASE_SERVICE_ACCOUNT):', error);
+    console.error('❌ Firebase Admin initialization failed (from FIREBASE_SERVICE_ACCOUNT):', error);
   }
 } else {
   console.error('❌ Firebase Admin not initialized: missing environment variables');
