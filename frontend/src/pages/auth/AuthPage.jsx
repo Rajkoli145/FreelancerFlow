@@ -147,8 +147,15 @@ const AuthPage = () => {
     setLoading(true);
     setErrors({});
     try {
-      await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle the rest
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+
+      // Authenticate with your backend
+      await axiosInstance.post('/auth/firebase', {}, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      // The onAuthStateChanged listener in AuthContext will handle the navigation
     } catch (error) {
       console.error('Google auth error:', error);
       setErrors({ general: error.message || 'Google authentication failed' });
@@ -161,8 +168,15 @@ const AuthPage = () => {
     setLoading(true);
     setErrors({});
     try {
-      await signInWithPopup(auth, githubProvider);
-      // onAuthStateChanged will handle the rest
+      const result = await signInWithPopup(auth, githubProvider);
+      const idToken = await result.user.getIdToken();
+
+      // Authenticate with your backend
+      await axiosInstance.post('/auth/firebase', {}, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      // The onAuthStateChanged listener in AuthContext will handle the navigation
     } catch (error) {
       console.error('GitHub auth error:', error);
       setErrors({ general: error.message || 'GitHub authentication failed' });

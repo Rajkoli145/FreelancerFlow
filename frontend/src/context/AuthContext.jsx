@@ -15,49 +15,37 @@ export const AuthProvider = ({ children }) => {
 
   // Global Firebase auth state listener
   useEffect(() => {
-    let isMounted = true;
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!isMounted) return;
-
-      setLoading(true);
       if (firebaseUser) {
+        // User is signed in with Firebase. Now, verify with our backend.
+        // This will also run after a successful popup sign-in, effectively syncing the state.
         try {
-          const idToken = await firebaseUser.getIdToken(true); // Force refresh
-          const res = await axiosInstance.post('/auth/firebase', {}, {
-            headers: { Authorization: `Bearer ${idToken}` },
-          });
-
-          if (isMounted && res.data?.token && res.data?.user) {
-            localStorage.setItem('authToken', res.data.token);
-            setUser(res.data.user);
-            setIsAuthenticated(true);
-          } else {
-            throw new Error('Failed to authenticate with backend');
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            // If we already have a JWT, fetch user data
+            const response = await getMe();
+            if (response.success) {
+              setUser(response.data.user);
+              setIsAuthenticated(true);
+            } else {
+              // Token is invalid, sign out
+              await signOut(auth);
+            }
           }
-        } catch (err) {
-          if (isMounted) {
-            console.error('Auth state change error:', err);
-            await signOut(auth);
-            localStorage.removeItem('authToken');
-            setUser(null);
-            setIsAuthenticated(false);
-          }
+        } catch (error) {
+          // Ignore error, user will be logged out
+          await signOut(auth);
         }
       } else {
+        // User is signed out
         localStorage.removeItem('authToken');
         setUser(null);
         setIsAuthenticated(false);
       }
-      if (isMounted) {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const login = async (email, password) => {
