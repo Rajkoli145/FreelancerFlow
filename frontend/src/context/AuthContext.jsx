@@ -14,56 +14,49 @@ export const AuthProvider = ({ children }) => {
   const isProcessingAuth = useRef(false);
 
   useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        const result = await getRedirectResult(auth);
+    setLoading(true);
+    getRedirectResult(auth)
+      .then(async (result) => {
         if (result) {
-          // User has just signed in via redirect.
+          // User has just signed in via redirect
           const idToken = await result.user.getIdToken();
           const res = await axiosInstance.post('/auth/firebase', {}, {
             headers: { Authorization: `Bearer ${idToken}` },
           });
-
           if (res.data?.token && res.data?.user) {
             localStorage.setItem('authToken', res.data.token);
-            setUser(res.data.user);
-            setIsAuthenticated(true);
-          }
-        } else {
-          // This is a page refresh, not a redirect.
-          // Check if user is already logged in.
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            const response = await getMe();
-            if (response.success) {
-              setUser(response.data.user);
-              setIsAuthenticated(true);
-            }
           }
         }
-      } catch (error) {
-        console.error('Authentication error:', error);
-        localStorage.removeItem('authToken');
-        setUser(null);
-        setIsAuthenticated(false);
-        await signOut(auth).catch(() => {}); // Attempt to sign out from Firebase
-      } finally {
+        // After handling redirect, set up the normal auth state listener
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              try {
+                const response = await getMe();
+                if (response.success) {
+                  setUser(response.data.user);
+                  setIsAuthenticated(true);
+                } else {
+                  await signOut(auth);
+                }
+              } catch (error) {
+                await signOut(auth);
+              }
+            }
+          } else {
+            localStorage.removeItem('authToken');
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+          setLoading(false);
+        });
+        return unsubscribe;
+      })
+      .catch((error) => {
+        console.error('Auth context setup error:', error);
         setLoading(false);
-      }
-    };
-
-    handleAuth();
-
-    // Set up a listener for subsequent auth state changes (e.g., manual sign-out)
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        localStorage.removeItem('authToken');
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    });
-
-    return () => unsubscribe();
+      });
   }, []);
 
   const login = async (email, password) => {
