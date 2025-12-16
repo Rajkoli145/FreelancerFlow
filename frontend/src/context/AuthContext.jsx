@@ -15,40 +15,49 @@ export const AuthProvider = ({ children }) => {
 
   // Global Firebase auth state listener
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (isProcessingAuth.current) return;
-      isProcessingAuth.current = true;
+      if (!isMounted) return;
+
+      setLoading(true);
       if (firebaseUser) {
         try {
-          // Get Firebase ID token
-          const idToken = await firebaseUser.getIdToken();
-          // Exchange for app JWT
+          const idToken = await firebaseUser.getIdToken(true); // Force refresh
           const res = await axiosInstance.post('/auth/firebase', {}, {
-            headers: { Authorization: `Bearer ${idToken}` }
+            headers: { Authorization: `Bearer ${idToken}` },
           });
-          if (res.data && res.data.token && res.data.user) {
+
+          if (isMounted && res.data?.token && res.data?.user) {
             localStorage.setItem('authToken', res.data.token);
             setUser(res.data.user);
             setIsAuthenticated(true);
           } else {
-            setUser(null);
-            setIsAuthenticated(false);
-            localStorage.removeItem('authToken');
+            throw new Error('Failed to authenticate with backend');
           }
         } catch (err) {
-          setUser(null);
-          setIsAuthenticated(false);
-          localStorage.removeItem('authToken');
+          if (isMounted) {
+            console.error('Auth state change error:', err);
+            await signOut(auth);
+            localStorage.removeItem('authToken');
+            setUser(null);
+            setIsAuthenticated(false);
+          }
         }
       } else {
+        localStorage.removeItem('authToken');
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('authToken');
       }
-      setLoading(false);
-      isProcessingAuth.current = false;
+      if (isMounted) {
+        setLoading(false);
+      }
     });
-    return () => unsubscribe();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email, password) => {
