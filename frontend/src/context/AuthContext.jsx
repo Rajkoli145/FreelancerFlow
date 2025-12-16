@@ -1,8 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
 import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
-import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import axiosInstance from '../api/axioInstance';
 
 const AuthContext = createContext(null);
@@ -14,49 +12,22 @@ export const AuthProvider = ({ children }) => {
   const isProcessingAuth = useRef(false);
 
   useEffect(() => {
-    setLoading(true);
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result) {
-          // User has just signed in via redirect
-          const idToken = await result.user.getIdToken();
-          const res = await axiosInstance.post('/auth/firebase', {}, {
-            headers: { Authorization: `Bearer ${idToken}` },
-          });
-          if (res.data?.token && res.data?.user) {
-            localStorage.setItem('authToken', res.data.token);
+    const checkLoggedIn = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          const response = await getMe();
+          if (response.success) {
+            setUser(response.data.user);
+            setIsAuthenticated(true);
           }
+        } catch (error) {
+          localStorage.removeItem('authToken');
         }
-        // After handling redirect, set up the normal auth state listener
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-          if (firebaseUser) {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-              try {
-                const response = await getMe();
-                if (response.success) {
-                  setUser(response.data.user);
-                  setIsAuthenticated(true);
-                } else {
-                  await signOut(auth);
-                }
-              } catch (error) {
-                await signOut(auth);
-              }
-            }
-          } else {
-            localStorage.removeItem('authToken');
-            setUser(null);
-            setIsAuthenticated(false);
-          }
-          setLoading(false);
-        });
-        return unsubscribe;
-      })
-      .catch((error) => {
-        console.error('Auth context setup error:', error);
-        setLoading(false);
-      });
+      }
+      setLoading(false);
+    };
+    checkLoggedIn();
   }, []);
 
   const login = async (email, password) => {
@@ -101,8 +72,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    await signOut(auth);
+  const logout = () => {
     localStorage.removeItem('authToken');
     setUser(null);
     setIsAuthenticated(false);
