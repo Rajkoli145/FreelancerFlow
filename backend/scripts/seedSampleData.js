@@ -171,7 +171,7 @@ async function seedData() {
       invoiceId: invoice1._id,
       amount: 118000,
       paymentDate: new Date(),
-      paymentMethod: 'Bank Transfer'
+      paymentMethod: 'bank_transfer'
     });
 
     console.log(`✅ Created invoice ${invoice1.invoiceNumber} and recorded payment`);
