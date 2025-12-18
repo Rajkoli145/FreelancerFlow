@@ -48,7 +48,7 @@ app.use(cors({
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 requests per window (increased for development)
+  max: 5, // 50 requests per window (increased for development)
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
