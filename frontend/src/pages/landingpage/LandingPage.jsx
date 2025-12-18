@@ -70,6 +70,22 @@ const LandingPage = () => {
 
     return (
         <div className="landing-page">
+            {/* Navigation Bar */}
+            <nav className="landing-nav">
+                <div
+                    className="logo-section"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
+                    <div className="logo-icon-box">
+                        <Zap className="logo-icon" />
+                    </div>
+                    <div className="logo-text">
+                        <h1 className="logo-name">FreelancerFlow</h1>
+                        <p className="logo-tagline">Manage your work</p>
+                    </div>
+                </div>
+            </nav>
+
             {/* Hero Section */}
             <section className="hero-section">
                 <div className="hero-content">
