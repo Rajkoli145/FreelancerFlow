@@ -37,6 +37,9 @@ createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Landing Page - Root */}
+          <Route path="/" element={<LandingPage />} />
+
           {/* Public Routes */}
           <Route path="/login" element={<AuthPage />} />
           <Route path="/register" element={<AuthPage />} />
@@ -53,9 +56,6 @@ createRoot(document.getElementById("root")).render(
               </ProtectedRoute>
             }
           />
-
-          {/* Landing Page - Root */}
-          <Route path="/" element={<LandingPage />} />
 
           {/* Placeholder routes for other pages */}
           <Route
