@@ -9,7 +9,7 @@ import { getProjects } from "../../api/projectApi";
 import { getUnbilledTimeLogs } from "../../api/timeApi";
 import { useAuth } from '../../context/AuthContext';
 import { getCurrencySymbol } from '../../utils/formatCurrency';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const CreateInvoicePage = () => {
   const navigate = useNavigate();

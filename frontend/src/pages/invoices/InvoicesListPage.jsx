@@ -15,7 +15,7 @@ import StatCard from "../../components/ui/StatCard";
 import PageHeader from "../../components/ui/PageHeader";
 import { getInvoices } from "../../api/invoiceApi";
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const InvoicesListPage = () => {
   const navigate = useNavigate();

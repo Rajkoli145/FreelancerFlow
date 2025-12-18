@@ -8,7 +8,7 @@ import NeuButton from '../../components/ui/NeuButton';
 import NeuInput from '../../components/ui/NeuInput';
 import PageHeader from '../../components/ui/PageHeader';
 import Loader from '../../components/ui/Loader';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const EditExpensePage = () => {
   const { id } = useParams();

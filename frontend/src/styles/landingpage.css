@@ -1,0 +1,472 @@
+/* Light Neumorphism Landing Page Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Light Neumorphism Colors */
+  --light-bg: #f0f0f3;
+  --light-surface: #e8e8eb;
+  --light-elevated: #ffffff;
+  --light-text: #2c3e50;
+  --light-text-secondary: #5a6c7d;
+  --light-primary: #4a6cf7;
+  --light-primary-hover: #3a5ce6;
+  --light-accent: #6c8aef;
+
+  /* Neumorphic Shadows */
+  --shadow-light: rgba(255, 255, 255, 0.8);
+  --shadow-dark: rgba(174, 174, 192, 0.4);
+  --shadow-inset-light: rgba(255, 255, 255, 0.5);
+  --shadow-inset-dark: rgba(174, 174, 192, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.landing-page {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--light-bg);
+  color: var(--light-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Hero Section */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #f0f0f3 0%, #e8e8eb 100%);
+}
+
+.hero-content {
+  max-width: 800px;
+  text-align: center;
+  animation: fadeInUp 0.9s ease-out;
+}
+
+.hero-title {
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: var(--light-text);
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  color: var(--light-text-secondary);
+  margin-bottom: 3rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: 400;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Neumorphic Buttons */
+.neu-btn {
+  padding: 1rem 2.8rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.neu-btn-primary {
+  background: var(--light-primary);
+  color: #ffffff;
+  box-shadow:
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light);
+}
+
+.neu-btn-primary:hover {
+  transform: translateY(-2px);
+  background: var(--light-primary-hover);
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+.neu-btn-primary:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-inset-dark),
+    inset -3px -3px 6px var(--shadow-inset-light);
+}
+
+.neu-btn-secondary {
+  background: var(--light-bg);
+  color: var(--light-text);
+  box-shadow:
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light);
+}
+
+.neu-btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+.neu-btn-secondary:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-inset-dark),
+    inset -3px -3px 6px var(--shadow-inset-light);
+}
+
+.neu-btn-cta {
+  background: var(--light-primary);
+  color: #ffffff;
+  padding: 1.1rem 3rem;
+  font-size: 1.1rem;
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+.neu-btn-cta:hover {
+  transform: translateY(-3px);
+  background: var(--light-primary-hover);
+  box-shadow:
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light);
+}
+
+/* Section Styles */
+section {
+  padding: 5rem 2rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 800;
+  margin-bottom: 0.8rem;
+  color: var(--light-text);
+  letter-spacing: -0.01em;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--light-text-secondary);
+  font-weight: 400;
+}
+
+/* Why FreelancerFlow Section */
+.why-section {
+  background: var(--light-bg);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.feature-card {
+  background: var(--light-bg);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  box-shadow:
+    9px 9px 18px var(--shadow-dark),
+    -9px -9px 18px var(--shadow-light);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+}
+
+.feature-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: var(--light-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow:
+    inset 4px 4px 8px var(--shadow-inset-dark),
+    inset -4px -4px 8px var(--shadow-inset-light);
+}
+
+.feature-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--light-primary);
+  stroke-width: 2.5;
+}
+
+.feature-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: var(--light-text);
+}
+
+.feature-description {
+  font-size: 0.98rem;
+  color: var(--light-text-secondary);
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* How It Works Section */
+.how-section {
+  background: var(--light-bg);
+}
+
+.steps-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2.5rem;
+  position: relative;
+}
+
+.step-card {
+  background: var(--light-bg);
+  border-radius: 18px;
+  padding: 2.2rem 1.8rem;
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light);
+}
+
+.step-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--light-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.3rem;
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-inset-dark),
+    inset -3px -3px 6px var(--shadow-inset-light);
+}
+
+.step-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--light-primary);
+  stroke-width: 2.5;
+}
+
+.step-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+  color: var(--light-text);
+}
+
+.step-description {
+  font-size: 0.95rem;
+  color: var(--light-text-secondary);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* What Makes It Better Section */
+.better-section {
+  background: var(--light-bg);
+}
+
+.benefits-container {
+  max-width: 850px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.benefit-item {
+  background: var(--light-bg);
+  border-radius: 14px;
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1.3rem;
+  box-shadow:
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.benefit-item:hover {
+  transform: translateX(6px);
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+.benefit-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--light-primary);
+  flex-shrink: 0;
+  stroke-width: 2.5;
+}
+
+.benefit-text {
+  font-size: 1.05rem;
+  color: var(--light-text);
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Call to Action Section */
+.cta-section {
+  padding: 5rem 2rem;
+  background: var(--light-bg);
+}
+
+.cta-content {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  background: var(--light-bg);
+  padding: 3.5rem 2.5rem;
+  border-radius: 24px;
+  box-shadow:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+}
+
+.cta-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--light-text);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+/* Footer */
+.landing-footer {
+  background: var(--light-bg);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border-top: 1px solid rgba(174, 174, 192, 0.15);
+}
+
+.footer-text {
+  color: var(--light-text-secondary);
+  font-size: 0.92rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  section {
+    padding: 4rem 1.5rem;
+  }
+
+  .hero-section {
+    min-height: 90vh;
+    padding: 2rem 1.5rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .neu-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .steps-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .cta-content {
+    padding: 2.5rem 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.9rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.7rem;
+  }
+
+  .feature-card,
+  .step-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .benefit-item {
+    padding: 1.4rem 1.5rem;
+  }
+}

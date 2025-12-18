@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bell } from 'lucide-react';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const Topbar = () => {
   const [showNotifications, setShowNotifications] = useState(false);

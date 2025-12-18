@@ -5,7 +5,7 @@ import NeuButton from '../../components/ui/NeuButton';
 import NeuInput from '../../components/ui/NeuInput';
 import { createProject } from '../../api/projectApi';
 import { getClients } from '../../api/clientApi';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const AddProjectPage = () => {
   const navigate = useNavigate();

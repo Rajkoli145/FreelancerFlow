@@ -5,7 +5,7 @@ import NeuButton from "../../components/ui/NeuButton";
 import NeuInput from "../../components/ui/NeuInput";
 import { createTimeLog } from "../../api/timeApi";
 import { getProjects } from "../../api/projectApi";
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const AddTimeLogPage = () => {
   const navigate = useNavigate();

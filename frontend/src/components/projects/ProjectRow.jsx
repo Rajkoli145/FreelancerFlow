@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Calendar } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import { format } from 'date-fns';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const ProjectRow = ({ project }) => {
   const navigate = useNavigate();

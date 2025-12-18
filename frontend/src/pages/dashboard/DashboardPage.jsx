@@ -28,7 +28,7 @@ import StatCard from '../../components/ui/StatCard';
 import Loader from '../../components/ui/Loader';
 import { useAuth } from '../../context/AuthContext';
 import { getDashboardStats } from '../../api/dashboardApi';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const DashboardPage = () => {
   const navigate = useNavigate();

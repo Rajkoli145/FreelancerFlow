@@ -5,7 +5,7 @@ import { getClientById, updateClient, deleteClient } from '../../api/clientApi';
 import NeuButton from '../../components/ui/NeuButton';
 import NeuInput from '../../components/ui/NeuInput';
 import Loader from '../../components/ui/Loader';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const EditClientPage = () => {
   const navigate = useNavigate();

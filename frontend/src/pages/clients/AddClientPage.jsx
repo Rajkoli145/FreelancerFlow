@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { createClient } from '../../api/clientApi';
 import NeuButton from '../../components/ui/NeuButton';
 import NeuInput from '../../components/ui/NeuInput';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const AddClientPage = () => {
   const navigate = useNavigate();

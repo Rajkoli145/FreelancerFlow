@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../../api/notificationApi';
 import Loader from '../../components/ui/Loader';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const NotificationsPage = () => {
   const [activeFilter, setActiveFilter] = useState("All");

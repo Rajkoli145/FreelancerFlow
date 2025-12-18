@@ -39,7 +39,7 @@ import StatCard from '../../components/ui/StatCard';
 import NeuButton from '../../components/ui/NeuButton';
 import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const ReportsPage = () => {
   const { formatAmount, currencySymbol } = useAuth();

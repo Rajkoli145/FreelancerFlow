@@ -7,7 +7,7 @@ import StatCard from '../../components/ui/StatCard';
 import PageHeader from '../../components/ui/PageHeader';
 import NeuButton from '../../components/ui/NeuButton';
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const ExpensesPage = () => {
   const navigate = useNavigate();

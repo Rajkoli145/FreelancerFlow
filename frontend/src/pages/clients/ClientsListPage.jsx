@@ -10,7 +10,7 @@ import NeuButton from '../../components/ui/NeuButton';
 import StatCard from '../../components/ui/StatCard';
 import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const ClientsListPage = () => {
   const navigate = useNavigate();

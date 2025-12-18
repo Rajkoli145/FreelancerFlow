@@ -8,7 +8,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import ProjectRow from '../../components/projects/ProjectRow';
 import Pagination from '../../components/ui/Pagination';
 import { getProjects, getProjectStats } from '../../api/projectApi';
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const ProjectsListPage = () => {
   const navigate = useNavigate();

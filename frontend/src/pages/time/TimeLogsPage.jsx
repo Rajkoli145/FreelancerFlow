@@ -7,7 +7,7 @@ import NeuButton from "../../components/ui/NeuButton";
 import StatCard from "../../components/ui/StatCard";
 import PageHeader from "../../components/ui/PageHeader";
 import { getTimeLogs } from "../../api/timeApi";
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const TimeLogsPage = () => {
   const navigate = useNavigate();

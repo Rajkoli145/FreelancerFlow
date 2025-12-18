@@ -1,8 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import './styles/global.css';
+import './styles/global/global.css';
 import { AuthProvider } from './context/AuthContext';
+import LandingPage from "./pages/landingpage/LandingPage";
 import AuthPage from "./pages/auth/AuthPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ProjectsListPage from "./pages/projects/ProjectsListPage";
@@ -36,278 +37,275 @@ createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/register" element={<AuthPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        
-        {/* Protected Routes with Layout */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <DashboardPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Redirect root to dashboard or login */}
-        <Route 
-          path="/" 
-          element={<Navigate to="/dashboard" replace />} 
-        />
-        
-        {/* Placeholder routes for other pages */}
-        <Route 
-          path="/projects" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ProjectsListPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/projects/new" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddProjectPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/projects/:id" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ProjectDetailPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/projects/:id/edit" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditProjectPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/clients" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ClientsListPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/clients/new" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddClientPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/clients/:id" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ClientDetailsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/clients/:id/edit" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditClientPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/time" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <TimeLogsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/time/new" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddTimeLogPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/time/:id/edit" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditTimeLogPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/invoices" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <InvoicesListPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/invoices/new" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <CreateInvoicePage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/invoices/:id" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <InvoiceDetailsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/invoices/:id/edit" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditInvoicePage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/invoices/:id/payment" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <InvoicePaymentPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Expenses Routes */}
-        <Route 
-          path="/expenses" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ExpensesPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/expenses/new" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddExpensePage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/expenses/edit/:id" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditExpensePage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Reports Route */}
-        <Route 
-          path="/reports" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ReportsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/settings" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <SettingsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/notifications" 
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <NotificationsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* 404 Not Found - Catch all unmatched routes */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Public Routes */}
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+
+          {/* Protected Routes with Layout */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <DashboardPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Landing Page - Root */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Placeholder routes for other pages */}
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ProjectsListPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AddProjectPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ProjectDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EditProjectPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clients"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ClientsListPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clients/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AddClientPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clients/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ClientDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clients/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EditClientPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/time"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <TimeLogsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/time/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AddTimeLogPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/time/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EditTimeLogPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <InvoicesListPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/invoices/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <CreateInvoicePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/invoices/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <InvoiceDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/invoices/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EditInvoicePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/invoices/:id/payment"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <InvoicePaymentPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Expenses Routes */}
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ExpensesPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/expenses/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AddExpensePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/expenses/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EditExpensePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reports Route */}
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ReportsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <SettingsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <NotificationsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 Not Found - Catch all unmatched routes */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   </StrictMode>
 );

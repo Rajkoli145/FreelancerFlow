@@ -6,7 +6,7 @@ import { getCurrencySymbol, CURRENCY_OPTIONS } from "../../utils/formatCurrency"
 import Loader from "../../components/ui/Loader";
 import NeuInput from "../../components/ui/NeuInput";
 import NeuButton from "../../components/ui/NeuButton";
-import '../../styles/neumorphism.css';
+import '../../styles/global/neumorphism.css';
 
 const SettingsPage = () => {
   // Profile Settings State
