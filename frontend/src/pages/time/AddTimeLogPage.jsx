@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Play, Pause, RotateCcw } from "lucide-react";
 import NeuButton from "../../components/ui/NeuButton";
 import NeuInput from "../../components/ui/NeuInput";
 import { createTimeLog } from "../../api/timeApi";
@@ -21,6 +21,37 @@ const AddTimeLogPage = () => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Timer state
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const timerRef = React.useRef(null);
+
+  useEffect(() => {
+    if (timerRunning) {
+      timerRef.current = setInterval(() => {
+        setSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [timerRunning]);
+
+  // Update hoursWorked when timer changes
+  useEffect(() => {
+    if (seconds > 0) {
+      const hours = (seconds / 3600).toFixed(2);
+      setHoursWorked(hours.toString());
+    }
+  }, [seconds]);
+
+  const formatTime = (totalSeconds) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -47,8 +78,8 @@ const AddTimeLogPage = () => {
       return;
     }
 
-    if (parseFloat(hoursWorked) <= 0) {
-      setError('Hours worked must be greater than 0');
+    if (parseFloat(hoursWorked) < 0.25) {
+      setError('Minimum log time is 0.25 hours (15 minutes)');
       return;
     }
 
@@ -69,7 +100,8 @@ const AddTimeLogPage = () => {
       navigate("/time");
     } catch (err) {
       console.error('Error creating time log:', err);
-      setError(err.error || err.message || 'Failed to create time entry');
+      const errorMessage = err.response?.data?.error || err.error || err.message || 'Failed to create time entry';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -84,29 +116,46 @@ const AddTimeLogPage = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="neu-card">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/time")}
-              className="neu-button p-2.5 rounded-xl transition-all duration-200"
-              style={{ boxShadow: '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff' }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.95)';
-                e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #c9ced6, inset -3px -3px 6px #ffffff';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff';
-              }}
-            >
-              <ArrowLeft className="w-5 h-5" style={{ color: '#6b7280' }} />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold neu-heading">Add Time Entry</h1>
-              <p className="neu-text-light mt-1">Record time spent on a project.</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate("/time")}
+                className="neu-button p-2.5 rounded-xl transition-all duration-200"
+                style={{ boxShadow: '4px 4px 8px #c9ced6, -4px -4px 8px #ffffff' }}
+              >
+                <ArrowLeft className="w-5 h-5" style={{ color: '#6b7280' }} />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold neu-heading">Add Time Entry</h1>
+                <p className="neu-text-light mt-1">Record time spent on a project.</p>
+              </div>
+            </div>
+
+            {/* Live Timer UI */}
+            <div className="neu-card-inset p-4 flex items-center gap-6">
+              <div className="text-2xl font-mono font-bold" style={{ color: 'var(--neu-primary)', minWidth: '100px' }}>
+                {formatTime(seconds)}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setTimerRunning(!timerRunning)}
+                  className="neu-icon-inset p-2 hover:scale-105 transition-transform"
+                  title={timerRunning ? "Pause" : "Start"}
+                >
+                  {timerRunning ? <Pause className="w-5 h-5 text-orange-500" /> : <Play className="w-5 h-5 text-green-500" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setTimerRunning(false);
+                    setSeconds(0);
+                    setHoursWorked("");
+                  }}
+                  className="neu-icon-inset p-2 hover:scale-105 transition-transform"
+                  title="Reset"
+                >
+                  <RotateCcw className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -196,8 +245,8 @@ const AddTimeLogPage = () => {
                   Billable Time
                 </span>
                 <span className="block text-xs neu-text-light mt-0.5">
-                  {billable 
-                    ? 'This time will be included in invoices' 
+                  {billable
+                    ? 'This time will be included in invoices'
                     : 'This time will NOT be invoiced (e.g., meetings, admin work)'}
                 </span>
               </div>

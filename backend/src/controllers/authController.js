@@ -30,13 +30,14 @@ const signup = async (req, res, next) => {
     res.status(201).json({
       success: true,
       data: {
-        user: { 
-          id: user._id, 
-          fullName: user.fullName, 
+        user: {
+          id: user._id,
+          fullName: user.fullName,
           email: user.email,
           currency: user.currency || 'USD',
           defaultHourlyRate: user.defaultHourlyRate || 0,
-          profilePicture: user.profilePicture
+          profilePicture: user.profilePicture,
+          role: user.role
         },
         token,
       },
@@ -73,13 +74,14 @@ const login = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        user: { 
-          id: user._id, 
-          fullName: user.fullName, 
+        user: {
+          id: user._id,
+          fullName: user.fullName,
           email: user.email,
           currency: user.currency || 'USD',
           defaultHourlyRate: user.defaultHourlyRate || 0,
-          profilePicture: user.profilePicture
+          profilePicture: user.profilePicture,
+          role: user.role
         },
         token,
       },
@@ -109,9 +111,9 @@ const updateProfile = async (req, res, next) => {
     if (email && email !== req.user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Email already in use" 
+        return res.status(400).json({
+          success: false,
+          error: "Email already in use"
         });
       }
     }
@@ -129,8 +131,8 @@ const updateProfile = async (req, res, next) => {
       { new: true, runValidators: true }
     ).select('-passwordHash');
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: user,
       message: 'Profile updated successfully'
     });
@@ -146,34 +148,34 @@ const updatePassword = async (req, res, next) => {
     const userId = req.user._id;
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Current password and new password are required" 
+      return res.status(400).json({
+        success: false,
+        error: "Current password and new password are required"
       });
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "New password must be at least 6 characters" 
+      return res.status(400).json({
+        success: false,
+        error: "New password must be at least 6 characters"
       });
     }
 
     // Get user with password
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        error: "User not found" 
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
       });
     }
 
     // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!isMatch) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Current password is incorrect" 
+      return res.status(400).json({
+        success: false,
+        error: "Current password is incorrect"
       });
     }
 
@@ -185,9 +187,9 @@ const updatePassword = async (req, res, next) => {
     user.passwordHash = newPasswordHash;
     await user.save();
 
-    res.json({ 
-      success: true, 
-      message: 'Password updated successfully' 
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
     });
   } catch (err) {
     next(err);

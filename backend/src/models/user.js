@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   firebaseUid: { type: String }, // Firebase UID for OAuth users
   authProvider: { type: String, enum: ['email', 'google', 'github'], default: 'email' }, // Auth provider
   profilePhoto: { type: String }, // Profile photo URL from OAuth
+  role: { type: String, enum: ['freelancer', 'admin'], default: 'freelancer' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

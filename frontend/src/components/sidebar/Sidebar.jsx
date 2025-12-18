@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Briefcase, 
-  Users, 
-  Clock, 
-  FileText, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Briefcase,
+  Users,
+  Clock,
+  FileText,
+  Settings,
   LogOut,
   Zap,
   TrendingDown,
@@ -67,14 +67,14 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside 
+    <aside
       className="fixed left-0 top-0 h-screen w-64 flex flex-col z-30"
       style={{ backgroundColor: '#eef1f6' }}
     >
       {/* Logo Section */}
       <div className="px-6 pt-8 pb-6">
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="w-11 h-11 rounded-xl flex items-center justify-center"
             style={{
               backgroundColor: '#4f46e5',
@@ -92,7 +92,7 @@ const Sidebar = () => {
 
       {/* User Info Card */}
       <div className="mx-4 mb-6">
-        <div 
+        <div
           className="p-4 rounded-2xl"
           style={{
             backgroundColor: '#eef1f6',
@@ -110,7 +110,7 @@ const Sidebar = () => {
                 }}
               />
             ) : (
-              <div 
+              <div
                 className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white"
                 style={{
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -132,7 +132,7 @@ const Sidebar = () => {
       <nav className="flex-1 px-4 overflow-y-auto">
         <div className="space-y-2">
           {menuItems.map((item) => (
-            <SidebarItem 
+            <SidebarItem
               key={item.to}
               icon={item.icon}
               label={item.label}

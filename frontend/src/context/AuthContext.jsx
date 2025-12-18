@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const response = await getMe();
           if (response.success) {
-            setUser(response.data.user);
+            setUser(response.data);
             setIsAuthenticated(true);
           }
         } catch (error) {
@@ -33,20 +33,20 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await loginApi({ email, password });
-      
+
       if (response.success && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         setUser(response.data.user);
         setIsAuthenticated(true);
         return { success: true, user: response.data.user };
       }
-      
+
       return { success: false, error: 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.error || error.message || 'Login failed' 
+      return {
+        success: false,
+        error: error.error || error.message || 'Login failed'
       };
     }
   };
@@ -54,20 +54,20 @@ export const AuthProvider = ({ children }) => {
   const signup = async (userData) => {
     try {
       const response = await signupApi(userData);
-      
+
       if (response.success && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         setUser(response.data.user);
         setIsAuthenticated(true);
         return { success: true, user: response.data.user };
       }
-      
+
       return { success: false, error: 'Signup failed' };
     } catch (error) {
       console.error('Signup error:', error);
-      return { 
-        success: false, 
-        error: error.error || error.message || 'Signup failed' 
+      return {
+        success: false,
+        error: error.error || error.message || 'Signup failed'
       };
     }
   };
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   // Currency helpers
   const currencyCode = user?.currency || 'USD';
   const currencySymbol = getCurrencySymbol(currencyCode);
-  
+
   const formatAmount = (amount) => formatCurrency(amount, currencyCode);
 
   const value = {

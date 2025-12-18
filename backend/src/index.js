@@ -20,6 +20,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 
 
@@ -48,7 +49,7 @@ app.use(cors({
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 50 requests per window (increased for development)
+  max: 100, // Increased for development testing
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
@@ -84,6 +85,7 @@ app.use('/api/dashboard', generalLimiter, dashboardRoutes);
 app.use('/api/notification', generalLimiter, notificationRoutes);
 app.use('/api/expense', generalLimiter, expenseRoutes);
 app.use('/api/report', generalLimiter, reportRoutes);
+app.use('/api/admin', generalLimiter, adminRoutes);
 
 // 4. health check
 app.get('/health', (req, res) => res.json({ success: true, time: new Date().toISOString() }));
