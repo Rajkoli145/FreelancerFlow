@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Invoice = require("../models/Invoice");
 const TimeLog = require("../models/TimeLog");
 const Client = require("../models/Client");
@@ -14,30 +15,30 @@ exports.createInvoice = async (req, res) => {
     // Validate client exists
     const client = await Client.findOne({ _id: clientId, userId: req.user._id });
     if (!client) {
-      return res.status(404).json({ 
-        success: false, 
-        error: "Client not found" 
+      return res.status(404).json({
+        success: false,
+        error: "Client not found"
       });
     }
 
     // If projectId provided, verify it belongs to the client
     if (projectId) {
-      const project = await Project.findOne({ 
-        _id: projectId, 
-        userId: req.user._id 
+      const project = await Project.findOne({
+        _id: projectId,
+        userId: req.user._id
       });
-      
+
       if (!project) {
-        return res.status(404).json({ 
-          success: false, 
-          error: "Project not found" 
+        return res.status(404).json({
+          success: false,
+          error: "Project not found"
         });
       }
-      
+
       if (project.clientId.toString() !== clientId.toString()) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Project does not belong to the selected client" 
+        return res.status(400).json({
+          success: false,
+          error: "Project does not belong to the selected client"
         });
       }
     }
@@ -51,9 +52,9 @@ exports.createInvoice = async (req, res) => {
         const quantity = item.quantity || item.hours || 1;
         const rate = item.rate || 0;
         const amount = item.amount || (quantity * rate);
-        
+
         subtotal += amount;
-        
+
         return {
           description: item.description || '',
           quantity: quantity,
@@ -72,9 +73,9 @@ exports.createInvoice = async (req, res) => {
       });
 
       if (unbilledLogs.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "No unbilled time logs found for this project" 
+        return res.status(400).json({
+          success: false,
+          error: "No unbilled time logs found for this project"
         });
       }
 
@@ -86,7 +87,7 @@ exports.createInvoice = async (req, res) => {
       invoiceItems = unbilledLogs.map(log => {
         const amount = log.hours * rate;
         subtotal += amount;
-        
+
         return {
           description: log.description,
           quantity: log.hours,
@@ -98,9 +99,9 @@ exports.createInvoice = async (req, res) => {
 
       // Mark time logs as invoiced (will be updated after invoice creation)
     } else {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Either items or projectId with unbilled hours must be provided" 
+      return res.status(400).json({
+        success: false,
+        error: "Either items or projectId with unbilled hours must be provided"
       });
     }
 
@@ -137,12 +138,12 @@ exports.createInvoice = async (req, res) => {
       const timeLogIds = invoiceItems
         .map(item => item.timeLogId)
         .filter(Boolean);
-      
+
       if (timeLogIds.length > 0) {
         await TimeLog.updateMany(
           { _id: { $in: timeLogIds } },
-          { 
-            $set: { 
+          {
+            $set: {
               invoiced: true,
               invoiceId: invoice._id
             }
@@ -304,7 +305,7 @@ exports.downloadInvoice = async (req, res) => {
     if (!client) {
       return res.status(404).json({ success: false, error: "Client not found for this invoice" });
     }
-    
+
     if (!project) {
       return res.status(404).json({ success: false, error: "Project not found for this invoice" });
     }
@@ -323,9 +324,9 @@ exports.downloadInvoice = async (req, res) => {
 exports.getInvoiceStats = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     const stats = await Invoice.aggregate([
-      { $match: { userId } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: '$status',
@@ -335,7 +336,7 @@ exports.getInvoiceStats = async (req, res) => {
         }
       }
     ]);
-    
+
     // Format response with all possible statuses
     const result = {
       total: 0,
@@ -348,15 +349,15 @@ exports.getInvoiceStats = async (req, res) => {
       cancelled: 0,
       urgent: 0 // overdue + partial
     };
-    
+
     stats.forEach(stat => {
       result[stat._id] = stat.count;
       result.total += stat.count;
     });
-    
+
     // Calculate urgent count (overdue + partial)
     result.urgent = (result.overdue || 0) + (result.partial || 0);
-    
+
     res.json({ success: true, data: result });
   } catch (err) {
     console.error('Error fetching invoice stats:', err);

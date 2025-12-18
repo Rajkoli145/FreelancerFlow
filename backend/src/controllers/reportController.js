@@ -13,17 +13,17 @@ exports.getFinancialReport = async (req, res) => {
   try {
     const userId = req.user._id;
     const { startDate, endDate } = req.query;
-    
+
     const dateFilter = {};
     if (startDate) dateFilter.$gte = new Date(startDate);
     if (endDate) dateFilter.$lte = new Date(endDate);
-    
+
     // Revenue (paid invoices)
-    const revenueMatch = { userId, status: 'paid' };
+    const revenueMatch = { userId: new mongoose.Types.ObjectId(userId), status: 'paid' };
     if (Object.keys(dateFilter).length > 0) {
       revenueMatch.updatedAt = dateFilter;
     }
-    
+
     const revenueData = await Invoice.aggregate([
       { $match: revenueMatch },
       {
@@ -34,13 +34,13 @@ exports.getFinancialReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Expenses
-    const expenseMatch = { userId };
+    const expenseMatch = { userId: new mongoose.Types.ObjectId(userId) };
     if (Object.keys(dateFilter).length > 0) {
       expenseMatch.date = dateFilter;
     }
-    
+
     const expenseData = await Expense.aggregate([
       { $match: expenseMatch },
       {
@@ -51,7 +51,7 @@ exports.getFinancialReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Tax deductible expenses
     const taxDeductibleData = await Expense.aggregate([
       { $match: { ...expenseMatch, taxDeductible: true } },
@@ -62,14 +62,14 @@ exports.getFinancialReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Outstanding invoices
     const outstandingData = await Invoice.aggregate([
-      { 
-        $match: { 
-          userId, 
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           status: { $in: ['sent', 'partial', 'overdue', 'viewed'] }
-        } 
+        }
       },
       {
         $group: {
@@ -79,7 +79,7 @@ exports.getFinancialReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Monthly breakdown
     const monthlyRevenue = await Invoice.aggregate([
       { $match: revenueMatch },
@@ -94,7 +94,7 @@ exports.getFinancialReport = async (req, res) => {
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
-    
+
     const monthlyExpenses = await Expense.aggregate([
       { $match: expenseMatch },
       {
@@ -108,7 +108,7 @@ exports.getFinancialReport = async (req, res) => {
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
-    
+
     // Expense by category
     const expenseByCategory = await Expense.aggregate([
       { $match: expenseMatch },
@@ -121,12 +121,12 @@ exports.getFinancialReport = async (req, res) => {
       },
       { $sort: { total: -1 } }
     ]);
-    
+
     const revenue = revenueData[0]?.totalRevenue || 0;
     const expenses = expenseData[0]?.totalExpenses || 0;
     const profit = revenue - expenses;
     const profitMargin = revenue > 0 ? ((profit / revenue) * 100).toFixed(2) : 0;
-    
+
     res.json({
       success: true,
       data: {
@@ -158,15 +158,15 @@ exports.getTimeReport = async (req, res) => {
   try {
     const userId = req.user._id;
     const { startDate, endDate, clientId, projectId } = req.query;
-    
-    const match = { userId };
+
+    const match = { userId: new mongoose.Types.ObjectId(userId) };
     if (startDate || endDate) {
       match.date = {};
       if (startDate) match.date.$gte = new Date(startDate);
       if (endDate) match.date.$lte = new Date(endDate);
     }
-    if (projectId) match.projectId = mongoose.Types.ObjectId(projectId);
-    
+    if (projectId) match.projectId = new mongoose.Types.ObjectId(projectId);
+
     // Total hours
     const totalHoursData = await TimeLog.aggregate([
       { $match: match },
@@ -178,7 +178,7 @@ exports.getTimeReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Billable vs Non-billable
     const billableData = await TimeLog.aggregate([
       { $match: match },
@@ -189,7 +189,7 @@ exports.getTimeReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Hours by project
     const hoursByProject = await TimeLog.aggregate([
       { $match: match },
@@ -212,7 +212,7 @@ exports.getTimeReport = async (req, res) => {
       { $sort: { hours: -1 } },
       { $limit: 10 }
     ]);
-    
+
     // Hours by client (via project)
     const hoursByClient = await TimeLog.aggregate([
       { $match: match },
@@ -244,7 +244,7 @@ exports.getTimeReport = async (req, res) => {
       { $sort: { hours: -1 } },
       { $limit: 10 }
     ]);
-    
+
     // Daily hours trend
     const dailyHours = await TimeLog.aggregate([
       { $match: match },
@@ -261,10 +261,10 @@ exports.getTimeReport = async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
       { $limit: 30 }
     ]);
-    
+
     const billedHours = billableData.find(b => b._id === true)?.hours || 0;
     const unbilledHours = billableData.find(b => b._id === false)?.hours || 0;
-    
+
     res.json({
       success: true,
       data: {
@@ -273,7 +273,7 @@ exports.getTimeReport = async (req, res) => {
           totalEntries: totalHoursData[0]?.entries || 0,
           billedHours,
           unbilledHours,
-          billablePercentage: totalHoursData[0]?.totalHours > 0 
+          billablePercentage: totalHoursData[0]?.totalHours > 0
             ? ((billedHours / totalHoursData[0].totalHours) * 100).toFixed(2)
             : 0
         },
@@ -305,19 +305,19 @@ exports.getClientReport = async (req, res) => {
   try {
     const userId = req.user._id;
     const { startDate, endDate } = req.query;
-    
+
     const dateFilter = {};
     if (startDate) dateFilter.$gte = new Date(startDate);
     if (endDate) dateFilter.$lte = new Date(endDate);
-    
+
     // Revenue by client
     const revenueByClient = await Invoice.aggregate([
-      { 
-        $match: { 
-          userId, 
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
           ...(Object.keys(dateFilter).length > 0 && { updatedAt: dateFilter })
-        } 
+        }
       },
       {
         $group: {
@@ -337,14 +337,14 @@ exports.getClientReport = async (req, res) => {
       { $unwind: '$client' },
       { $sort: { revenue: -1 } }
     ]);
-    
+
     // Outstanding by client
     const outstandingByClient = await Invoice.aggregate([
-      { 
-        $match: { 
-          userId,
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           status: { $in: ['sent', 'partial', 'overdue', 'viewed'] }
-        } 
+        }
       },
       {
         $group: {
@@ -364,10 +364,10 @@ exports.getClientReport = async (req, res) => {
       { $unwind: '$client' },
       { $sort: { outstanding: -1 } }
     ]);
-    
+
     // Active projects by client
     const projectsByClient = await Project.aggregate([
-      { $match: { userId, status: 'active' } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'active' } },
       {
         $group: {
           _id: '$clientId',
@@ -384,7 +384,7 @@ exports.getClientReport = async (req, res) => {
       },
       { $unwind: '$client' }
     ]);
-    
+
     res.json({
       success: true,
       data: {
@@ -421,37 +421,37 @@ exports.getClientReport = async (req, res) => {
 exports.getProjectReport = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     const projects = await Project.find({ userId })
       .populate('clientId', 'name company')
       .lean();
-    
+
     const projectReports = await Promise.all(
       projects.map(async (project) => {
         // Hours logged
         const hoursData = await TimeLog.aggregate([
-          { $match: { projectId: project._id } },
+          { $match: { projectId: new mongoose.Types.ObjectId(project._id) } },
           { $group: { _id: null, totalHours: { $sum: '$hours' } } }
         ]);
-        
+
         // Revenue from invoices
         const revenueData = await Invoice.aggregate([
-          { $match: { projectId: project._id, status: 'paid' } },
+          { $match: { projectId: new mongoose.Types.ObjectId(project._id), status: 'paid' } },
           { $group: { _id: null, totalRevenue: { $sum: '$amountPaid' } } }
         ]);
-        
+
         // Expenses
         const expenseData = await Expense.aggregate([
-          { $match: { projectId: project._id } },
+          { $match: { projectId: new mongoose.Types.ObjectId(project._id) } },
           { $group: { _id: null, totalExpenses: { $sum: '$amount' } } }
         ]);
-        
+
         const hours = hoursData[0]?.totalHours || 0;
         const revenue = revenueData[0]?.totalRevenue || 0;
         const expenses = expenseData[0]?.totalExpenses || 0;
         const profit = revenue - expenses;
         const hourlyRate = hours > 0 ? revenue / hours : 0;
-        
+
         return {
           projectId: project._id,
           projectName: project.title,
@@ -466,10 +466,10 @@ exports.getProjectReport = async (req, res) => {
         };
       })
     );
-    
+
     // Sort by profit (highest first)
     projectReports.sort((a, b) => b.profit - a.profit);
-    
+
     res.json({
       success: true,
       data: {
@@ -496,19 +496,19 @@ exports.getTaxReport = async (req, res) => {
   try {
     const userId = req.user._id;
     const { year } = req.query;
-    
+
     const currentYear = year ? parseInt(year) : new Date().getFullYear();
     const startOfYear = new Date(currentYear, 0, 1);
     const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
-    
+
     // Total income
     const incomeData = await Invoice.aggregate([
-      { 
-        $match: { 
-          userId,
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
           updatedAt: { $gte: startOfYear, $lte: endOfYear }
-        } 
+        }
       },
       {
         $group: {
@@ -518,15 +518,15 @@ exports.getTaxReport = async (req, res) => {
         }
       }
     ]);
-    
+
     // Tax deductible expenses by category
     const deductibleExpenses = await Expense.aggregate([
-      { 
-        $match: { 
-          userId,
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           taxDeductible: true,
           date: { $gte: startOfYear, $lte: endOfYear }
-        } 
+        }
       },
       {
         $group: {
@@ -537,18 +537,18 @@ exports.getTaxReport = async (req, res) => {
       },
       { $sort: { total: -1 } }
     ]);
-    
+
     // Total deductible
     const totalDeductible = deductibleExpenses.reduce((sum, exp) => sum + exp.total, 0);
-    
+
     // Monthly income breakdown
     const monthlyIncome = await Invoice.aggregate([
-      { 
-        $match: { 
-          userId,
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
           updatedAt: { $gte: startOfYear, $lte: endOfYear }
-        } 
+        }
       },
       {
         $group: {
@@ -558,10 +558,10 @@ exports.getTaxReport = async (req, res) => {
       },
       { $sort: { '_id': 1 } }
     ]);
-    
+
     const grossIncome = incomeData[0]?.totalIncome || 0;
     const taxableIncome = grossIncome - totalDeductible;
-    
+
     res.json({
       success: true,
       data: {
@@ -586,19 +586,19 @@ exports.getTaxReport = async (req, res) => {
 function mergeMonthlyData(revenue, expenses) {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const merged = {};
-  
+
   revenue.forEach(r => {
     const key = `${r._id.year}-${r._id.month}`;
     if (!merged[key]) merged[key] = { year: r._id.year, month: r._id.month, revenue: 0, expenses: 0 };
     merged[key].revenue = r.revenue;
   });
-  
+
   expenses.forEach(e => {
     const key = `${e._id.year}-${e._id.month}`;
     if (!merged[key]) merged[key] = { year: e._id.year, month: e._id.month, revenue: 0, expenses: 0 };
     merged[key].expenses = e.expenses;
   });
-  
+
   return Object.values(merged)
     .sort((a, b) => a.year - b.year || a.month - b.month)
     .map(m => ({

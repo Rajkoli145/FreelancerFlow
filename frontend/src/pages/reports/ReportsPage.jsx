@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  Calendar, 
+import {
+  TrendingUp,
+  Calendar,
   Download,
   DollarSign,
   TrendingDown,
@@ -27,12 +27,12 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { 
-  getFinancialReport, 
-  getTimeReport, 
-  getClientReport, 
+import {
+  getFinancialReport,
+  getTimeReport,
+  getClientReport,
   getProjectReport,
-  getTaxReport 
+  getTaxReport
 } from '../../api/reportApi';
 import Loader from '../../components/ui/Loader';
 import StatCard from '../../components/ui/StatCard';
@@ -67,7 +67,7 @@ const ReportsPage = () => {
     try {
       setLoading(true);
       let response;
-      
+
       switch (activeTab) {
         case 'financial':
           response = await getFinancialReport(dateRange);
@@ -87,7 +87,7 @@ const ReportsPage = () => {
         default:
           response = await getFinancialReport(dateRange);
       }
-      
+
       setReportData(response.data || {});
     } catch (err) {
       console.error('Error fetching report:', err);
@@ -113,7 +113,7 @@ const ReportsPage = () => {
 
   return (
     <div className="neu-container space-y-6">
-      <PageHeader 
+      <PageHeader
         title="Reports & Analytics"
         subtitle="Comprehensive insights into your freelance business."
       />
@@ -161,9 +161,8 @@ const ReportsPage = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
-                  activeTab === tab.id ? 'neu-button-primary' : 'neu-button'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${activeTab === tab.id ? 'neu-button-primary' : 'neu-button'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
@@ -209,28 +208,28 @@ const FinancialReport = ({ data, colors, formatAmount, currencySymbol }) => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
+        <StatCard
           icon={TrendingUp}
           title="Total Revenue"
           value={formatAmount(summary.totalRevenue)}
           subtitle={`${summary.invoiceCount} invoices`}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingDown}
           title="Total Expenses"
           value={formatAmount(summary.totalExpenses)}
           subtitle={`${summary.expenseCount} expenses`}
           iconBg="#ef4444"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Net Profit"
           value={formatAmount(summary.netProfit)}
           subtitle={`${summary.profitMargin}% margin`}
           iconBg={summary.netProfit >= 0 ? '#22c55e' : '#ef4444'}
         />
-        <StatCard 
+        <StatCard
           icon={FileText}
           title="Outstanding"
           value={formatAmount(summary.outstandingAmount)}
@@ -244,17 +243,17 @@ const FinancialReport = ({ data, colors, formatAmount, currencySymbol }) => {
         <h3 className="text-lg font-semibold mb-4" style={{ color: '#374151' }}>
           Revenue vs Expenses Trend
         </h3>
-        <ResponsiveContainer width="100%" aspect={2.5}>
+        <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={monthlyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }}
-              />
-              <Legend />
-              <Area type="monotone" dataKey="revenue" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.6} name="Revenue" />
-              <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Expenses" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
+            <XAxis dataKey="month" stroke="#6b7280" />
+            <YAxis stroke="#6b7280" />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }}
+            />
+            <Legend />
+            <Area type="monotone" dataKey="revenue" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.6} name="Revenue" />
+            <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Expenses" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -265,22 +264,22 @@ const FinancialReport = ({ data, colors, formatAmount, currencySymbol }) => {
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#374151' }}>
             Expense by Category
           </h3>
-          <ResponsiveContainer width="100%" aspect={1.5}>
+          <ResponsiveContainer width="100%" height={300}>
             <RePieChart>
-                <Pie
-                  data={expenseByCategory}
-                  dataKey="total"
-                  nameKey="_id"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={(entry) => `${entry._id}: ${currencySymbol}${entry.total.toLocaleString()}`}
-                >
-                  {expenseByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
+              <Pie
+                data={expenseByCategory}
+                dataKey="total"
+                nameKey="_id"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={(entry) => `${entry._id}: ${currencySymbol}${entry.total.toLocaleString()}`}
+              >
+                {expenseByCategory.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
             </RePieChart>
           </ResponsiveContainer>
         </div>
@@ -316,21 +315,21 @@ const TimeReport = ({ data, colors, formatAmount }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
+        <StatCard
           icon={Clock}
           title="Total Hours"
           value={`${(summary.totalHours || 0).toFixed(1)}h`}
           subtitle={`${summary.totalEntries || 0} entries`}
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingUp}
           title="Billed Hours"
           value={`${(summary.billedHours || 0).toFixed(1)}h`}
           subtitle={`${summary.billablePercentage || 0}% of total`}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingDown}
           title="Unbilled Hours"
           value={`${(summary.unbilledHours || 0).toFixed(1)}h`}
@@ -343,13 +342,13 @@ const TimeReport = ({ data, colors, formatAmount }) => {
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#374151' }}>
             Hours by Project (Top 10)
           </h3>
-          <ResponsiveContainer width="100%" aspect={2}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={hoursByProject}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
-                <XAxis dataKey="projectName" stroke="#6b7280" angle={-45} textAnchor="end" height={100} />
-                <YAxis stroke="#6b7280" />
-                <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
-                <Bar dataKey="hours" fill="#4A5FFF" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
+              <XAxis dataKey="projectName" stroke="#6b7280" angle={-45} textAnchor="end" height={100} />
+              <YAxis stroke="#6b7280" />
+              <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
+              <Bar dataKey="hours" fill="#4A5FFF" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -433,25 +432,25 @@ const ProjectReport = ({ data, colors, formatAmount }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
+        <StatCard
           icon={Briefcase}
           title="Total Projects"
           value={summary.totalProjects || 0}
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingUp}
           title="Profitable Projects"
           value={summary.profitableProjects || 0}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Total Revenue"
           value={formatAmount(summary.totalRevenue || 0)}
           iconBg="#3b82f6"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Total Profit"
           value={formatAmount(summary.totalProfit || 0)}
@@ -503,26 +502,26 @@ const TaxReport = ({ data, colors, formatAmount }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Gross Income"
           value={formatAmount(summary.grossIncome || 0)}
           subtitle={`Year ${year}`}
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingDown}
           title="Total Deductions"
           value={formatAmount(summary.totalDeductions || 0)}
           iconBg="#f97316"
         />
-        <StatCard 
+        <StatCard
           icon={FileText}
           title="Taxable Income"
           value={formatAmount(summary.taxableIncome || 0)}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Tax Collected"
           value={formatAmount(summary.taxCollected || 0)}
@@ -534,13 +533,13 @@ const TaxReport = ({ data, colors, formatAmount }) => {
         <h3 className="text-lg font-semibold mb-4" style={{ color: '#374151' }}>
           Monthly Income ({year})
         </h3>
-        <ResponsiveContainer width="100%" aspect={2.5}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart data={monthlyIncome}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
-              <Bar dataKey="income" fill="#4A5FFF" name="Income" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
+            <XAxis dataKey="month" stroke="#6b7280" />
+            <YAxis stroke="#6b7280" />
+            <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
+            <Bar dataKey="income" fill="#4A5FFF" name="Income" />
           </BarChart>
         </ResponsiveContainer>
       </div>
