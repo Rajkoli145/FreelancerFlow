@@ -56,7 +56,7 @@ const authLimiter = rateLimit({
 
 const mutationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 10, // 100 requests per window
   message: 'Too many requests, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
@@ -64,7 +64,7 @@ const mutationLimiter = rateLimit({
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // 200 requests per window
+  max: 20, // 200 requests per window
   standardHeaders: true,
   legacyHeaders: false,
 })
