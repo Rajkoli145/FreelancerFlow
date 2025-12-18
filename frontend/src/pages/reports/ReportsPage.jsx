@@ -250,6 +250,7 @@ const FinancialReport = ({ data, colors, formatAmount, currencySymbol }) => {
             <YAxis stroke="#6b7280" />
             <Tooltip
               contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }}
+              formatter={(value) => formatAmount(value)}
             />
             <Legend />
             <Area type="monotone" dataKey="revenue" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.6} name="Revenue" />
@@ -273,13 +274,13 @@ const FinancialReport = ({ data, colors, formatAmount, currencySymbol }) => {
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={(entry) => `${entry._id}: ${currencySymbol}${entry.total.toLocaleString()}`}
+                label={(entry) => `${entry._id}: ${formatAmount(entry.total)}`}
               >
                 {expenseByCategory.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value) => formatAmount(value)} />
             </RePieChart>
           </ResponsiveContainer>
         </div>
@@ -347,7 +348,10 @@ const TimeReport = ({ data, colors, formatAmount }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
               <XAxis dataKey="projectName" stroke="#6b7280" angle={-45} textAnchor="end" height={100} />
               <YAxis stroke="#6b7280" />
-              <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }}
+                formatter={(value) => [`${Number(value).toFixed(1)}h`, 'Hours']}
+              />
               <Bar dataKey="hours" fill="#4A5FFF" />
             </BarChart>
           </ResponsiveContainer>
@@ -538,7 +542,10 @@ const TaxReport = ({ data, colors, formatAmount }) => {
             <CartesianGrid strokeDasharray="3 3" stroke="#d1d9e6" />
             <XAxis dataKey="month" stroke="#6b7280" />
             <YAxis stroke="#6b7280" />
-            <Tooltip contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#eef1f6', border: 'none', borderRadius: '12px' }}
+              formatter={(value) => formatAmount(value)}
+            />
             <Bar dataKey="income" fill="#4A5FFF" name="Income" />
           </BarChart>
         </ResponsiveContainer>

@@ -16,12 +16,16 @@ exports.getFinancialReport = async (req, res) => {
 
     const dateFilter = {};
     if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.$lte = end;
+    }
 
-    // Revenue (paid invoices)
+    // Revenue (paid invoices) - Use createdAt for consistency with dashboard
     const revenueMatch = { userId: new mongoose.Types.ObjectId(userId), status: 'paid' };
     if (Object.keys(dateFilter).length > 0) {
-      revenueMatch.updatedAt = dateFilter;
+      revenueMatch.createdAt = dateFilter;
     }
 
     const revenueData = await Invoice.aggregate([
@@ -86,8 +90,8 @@ exports.getFinancialReport = async (req, res) => {
       {
         $group: {
           _id: {
-            year: { $year: '$updatedAt' },
-            month: { $month: '$updatedAt' }
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
           },
           revenue: { $sum: '$amountPaid' }
         }
@@ -308,7 +312,11 @@ exports.getClientReport = async (req, res) => {
 
     const dateFilter = {};
     if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.$lte = end;
+    }
 
     // Revenue by client
     const revenueByClient = await Invoice.aggregate([
@@ -316,7 +324,7 @@ exports.getClientReport = async (req, res) => {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
-          ...(Object.keys(dateFilter).length > 0 && { updatedAt: dateFilter })
+          ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
         }
       },
       {
@@ -507,7 +515,7 @@ exports.getTaxReport = async (req, res) => {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
-          updatedAt: { $gte: startOfYear, $lte: endOfYear }
+          createdAt: { $gte: startOfYear, $lte: endOfYear }
         }
       },
       {
@@ -547,12 +555,12 @@ exports.getTaxReport = async (req, res) => {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
           status: 'paid',
-          updatedAt: { $gte: startOfYear, $lte: endOfYear }
+          createdAt: { $gte: startOfYear, $lte: endOfYear }
         }
       },
       {
         $group: {
-          _id: { $month: '$updatedAt' },
+          _id: { $month: '$createdAt' },
           income: { $sum: '$amountPaid' }
         }
       },

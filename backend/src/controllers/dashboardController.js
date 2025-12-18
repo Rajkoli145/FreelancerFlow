@@ -158,7 +158,7 @@ exports.getDashboardStats = async (req, res) => {
           pendingInvoices,
           activeProjects,
           expenses: thisMonthExpenses,
-          netProfit
+          netProfit: Math.round(netProfit * 100) / 100
         },
         earningsData,
         productivityData,

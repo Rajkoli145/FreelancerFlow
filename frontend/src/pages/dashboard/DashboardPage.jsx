@@ -482,7 +482,7 @@ const DashboardPage = () => {
                     borderRadius: '12px',
                     boxShadow: '6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff'
                   }}
-                  formatter={(value) => [`${value} hours`, 'Time Logged']}
+                  formatter={(value) => [`${parseFloat(value).toFixed(1)} hours`, 'Time Logged']}
                 />
                 <Bar
                   dataKey="hours"
@@ -580,7 +580,7 @@ const DashboardPage = () => {
                       <p className="text-sm neu-text-light">{log.description || 'No description'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold" style={{ color: 'var(--neu-primary)' }}>{log.hours}h</p>
+                      <p className="font-semibold" style={{ color: 'var(--neu-primary)' }}>{Number(log.hours).toFixed(1)}h</p>
                       <p className="text-xs neu-text-light">
                         {(() => {
                           const logDate = new Date(log.date);

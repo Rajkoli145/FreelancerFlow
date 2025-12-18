@@ -18,9 +18,60 @@ exports.createClient = async (req, res, next) => {
 
 exports.getClients = async (req, res, next) => {
   try {
-    const clients = await Client.find({ userId: req.user._id });
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+
+    const clients = await Client.aggregate([
+      { $match: { userId } },
+      {
+        $lookup: {
+          from: 'invoices',
+          let: { clientId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$clientId', '$$clientId'] },
+                    { $eq: ['$userId', userId] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'invoices'
+        }
+      },
+      {
+        $addFields: {
+          totalBilled: { $sum: '$invoices.totalAmount' },
+          outstandingAmount: {
+            $sum: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: '$invoices',
+                    as: 'inv',
+                    cond: { $in: ['$$inv.status', ['sent', 'partial', 'overdue', 'viewed']] }
+                  }
+                },
+                as: 'inv',
+                in: { $subtract: ['$$inv.totalAmount', '$$inv.amountPaid'] }
+              }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          invoices: 0 // Remove the temporary invoices array
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+
     res.json({ success: true, data: clients });
   } catch (err) {
+    console.error('Error fetching clients:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 };

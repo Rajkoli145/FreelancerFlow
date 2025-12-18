@@ -21,7 +21,7 @@ async function seedData() {
     console.log('🌱 Starting to seed sample data...\n');
 
     // Step 1: Find or create a test user
-    const userEmail = '2024.rajk@isu.ac.in';
+    const userEmail = 'koliraj120@gmail.com';
     let user = await User.findOne({ email: userEmail });
 
     if (!user) {
@@ -123,7 +123,7 @@ async function seedData() {
         userId,
         projectId: project1._id,
         date: new Date(`2024-12-${day}`),
-        hours: 6 + Math.random() * 4,
+        hours: Math.round((6 + Math.random() * 4) * 10) / 10, // Round to 1 decimal
         description: `Working on module ${day}`,
         billable: true,
         invoiced: false
@@ -139,7 +139,7 @@ async function seedData() {
         userId,
         category: expenseCategories[i % expenseCategories.length],
         description: `Sample Expense ${i + 1}`,
-        amount: 500 + Math.random() * 2000,
+        amount: Math.round((500 + Math.random() * 2000) * 100) / 100, // Round to 2 decimals
         date: new Date(Date.now() - (i * 5 * 24 * 60 * 60 * 1000)),
         paymentMethod: 'Credit Card',
         taxDeductible: true

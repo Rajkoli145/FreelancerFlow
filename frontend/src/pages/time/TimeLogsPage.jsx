@@ -58,7 +58,7 @@ const TimeLogsPage = () => {
   return (
     <div className="neu-container space-y-6">
       {/* Header Section */}
-      <PageHeader 
+      <PageHeader
         title="Time Tracking"
         subtitle="View all time entries for your projects."
         actionLabel="Add Time Entry"
@@ -68,21 +68,21 @@ const TimeLogsPage = () => {
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-6">
-        <StatCard 
+        <StatCard
           icon={Clock}
           title="Total Hours"
           value={stats.totalHours}
           subtitle="All time"
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={Calendar}
           title="This Month"
           value={stats.thisMonth}
           subtitle="December 2025"
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={AlertCircle}
           title="Unbilled Hours"
           value={stats.unbilledHours}
@@ -92,7 +92,7 @@ const TimeLogsPage = () => {
       </div>
 
       {/* Search Bar */}
-      <NeuInput 
+      <NeuInput
         icon={Search}
         placeholder="Search time logs by project or description..."
         value={searchQuery}
@@ -123,73 +123,73 @@ const TimeLogsPage = () => {
             </p>
           </div>
         ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="neu-card-inset">
-              <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
-                  Date
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
-                  Project
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
-                  Description
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold neu-text">
-                  Hours
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-semibold neu-text">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody style={{ borderTop: '1px solid var(--neu-dark)' }}>
-              {timeLogs
-                .filter(log => {
-                  if (!searchQuery) return true;
-                  const query = searchQuery.toLowerCase();
-                  return (
-                    (log.projectId?.title || log.projectId?.name || '').toLowerCase().includes(query) ||
-                    (log.description || '').toLowerCase().includes(query)
-                  );
-                })
-                .map((log) => (
-                <tr
-                  key={log._id || log.id}
-                  className="transition-colors"
-                  style={{ borderBottom: '1px solid var(--neu-dark)' }}
-                >
-                  <td className="py-3 px-4 neu-text">
-                    {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-medium neu-heading">
-                      {log.projectId?.title || log.projectId?.name || 'No Project'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 neu-text">
-                    {log.description}
-                  </td>
-                  <td className="py-3 px-4 text-right font-medium neu-heading">
-                    {log.hours} hrs
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => navigate(`/time/${log._id || log.id}/edit`)}
-                        className="neu-button p-1.5"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 neu-text-light" />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="neu-card-inset">
+                <tr>
+                  <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
+                    Date
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
+                    Project
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold neu-text">
+                    Description
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold neu-text">
+                    Hours
+                  </th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold neu-text">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody style={{ borderTop: '1px solid var(--neu-dark)' }}>
+                {timeLogs
+                  .filter(log => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      (log.projectId?.title || log.projectId?.name || '').toLowerCase().includes(query) ||
+                      (log.description || '').toLowerCase().includes(query)
+                    );
+                  })
+                  .map((log) => (
+                    <tr
+                      key={log._id || log.id}
+                      className="transition-colors"
+                      style={{ borderBottom: '1px solid var(--neu-dark)' }}
+                    >
+                      <td className="py-3 px-4 neu-text">
+                        {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-medium neu-heading">
+                          {log.projectId?.title || log.projectId?.name || 'No Project'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 neu-text">
+                        {log.description}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium neu-heading">
+                        {Number(log.hours).toFixed(1)} hrs
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => navigate(`/time/${log._id || log.id}/edit`)}
+                            className="neu-button p-1.5"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 neu-text-light" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

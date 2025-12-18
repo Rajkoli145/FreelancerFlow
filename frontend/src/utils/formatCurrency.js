@@ -90,12 +90,15 @@ export const getCurrencySymbol = (currencyCode = 'USD') => {
 export const formatCurrency = (amount = 0, currencyCode = 'USD') => {
   const symbol = getCurrencySymbol(currencyCode);
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
+
   // Handle invalid numbers
   if (isNaN(numAmount)) return `${symbol}0`;
-  
-  // Format with commas
-  return `${symbol}${numAmount.toLocaleString()}`;
+
+  // Format with commas and 2 decimals max
+  return `${symbol}${numAmount.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })}`;
 };
 
 /**

@@ -3,10 +3,12 @@ import { Eye, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ClientAvatar from './ClientAvatar';
 import ClientStatusBadge from './ClientStatusBadge';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/global/neumorphism.css';
 
 export default function ClientRow({ client }) {
   const navigate = useNavigate();
+  const { formatAmount } = useAuth();
 
   return (
     <tr className="transition-colors" style={{ borderBottom: '1px solid var(--neu-dark)' }}>
@@ -23,14 +25,14 @@ export default function ClientRow({ client }) {
 
       {/* Total Billed */}
       <td className="py-4 px-6 text-sm font-semibold neu-heading">
-        ${client.totalBilled?.toLocaleString() || '0'}
+        {formatAmount(client.totalBilled || 0)}
       </td>
 
       {/* Outstanding */}
       <td className="py-4 px-6">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold neu-heading">
-            ${client.outstandingAmount?.toLocaleString() || '0'}
+            {formatAmount(client.outstandingAmount || 0)}
           </span>
           <ClientStatusBadge status={client.status} />
         </div>
