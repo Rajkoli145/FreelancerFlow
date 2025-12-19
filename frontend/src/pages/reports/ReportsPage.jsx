@@ -38,7 +38,7 @@ import Loader from '../../components/ui/Loader';
 import StatCard from '../../components/ui/StatCard';
 import NeuButton from '../../components/ui/NeuButton';
 import PageHeader from '../../components/ui/PageHeader';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import '../../styles/global/neumorphism.css';
 
 const ReportsPage = () => {

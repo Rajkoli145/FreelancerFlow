@@ -13,7 +13,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { getInvoiceStats } from '../../api/invoiceApi';
 
 const Sidebar = () => {

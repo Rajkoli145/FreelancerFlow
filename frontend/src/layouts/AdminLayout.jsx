@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShieldCheck, LogOut, LayoutDashboard, Monitor } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminLayout = ({ children }) => {
     const navigate = useNavigate();

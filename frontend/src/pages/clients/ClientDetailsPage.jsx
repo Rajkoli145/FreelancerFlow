@@ -10,7 +10,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ClientStatusBadge from '../../components/clients/ClientStatusBadge';
 import Loader from '../../components/ui/Loader';
 import EmptyState from '../../components/ui/EmptyState';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const ClientDetailsPage = () => {
   const navigate = useNavigate();
@@ -33,12 +33,12 @@ const ClientDetailsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Fetch client details
         const clientResponse = await getClientById(id);
         const clientData = clientResponse.data || clientResponse;
         setClient(clientData);
-        
+
         // Fetch client statistics from backend
         try {
           const statsResponse = await getClientStats(id);
@@ -53,7 +53,7 @@ const ClientDetailsPage = () => {
             totalHours: 0
           });
         }
-        
+
         // Fetch projects for this client (for display in list)
         try {
           const projectsResponse = await getProjects({ clientId: id });
@@ -63,7 +63,7 @@ const ClientDetailsPage = () => {
           console.error('Error fetching projects:', err);
           setProjects([]);
         }
-        
+
         // Fetch invoices for this client (for display in list)
         try {
           const invoicesResponse = await getInvoices({ clientId: id });
@@ -191,7 +191,7 @@ const ClientDetailsPage = () => {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 h-full flex flex-col">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-            
+
             {/* Avatar & Name */}
             <div className="flex items-center gap-4 mb-6">
               <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xl font-bold">

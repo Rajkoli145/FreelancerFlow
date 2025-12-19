@@ -6,7 +6,7 @@ import Loader from '../../components/ui/Loader';
 import StatCard from '../../components/ui/StatCard';
 import PageHeader from '../../components/ui/PageHeader';
 import NeuButton from '../../components/ui/NeuButton';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import '../../styles/global/neumorphism.css';
 
 const ExpensesPage = () => {
@@ -72,7 +72,7 @@ const ExpensesPage = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this expense?')) return;
-    
+
     try {
       await deleteExpense(id);
       fetchExpenses();
@@ -83,8 +83,8 @@ const ExpensesPage = () => {
     }
   };
 
-  const filteredExpenses = filterCategory === 'all' 
-    ? expenses 
+  const filteredExpenses = filterCategory === 'all'
+    ? expenses
     : expenses.filter(exp => exp.category === filterCategory);
 
   if (loading) {
@@ -98,7 +98,7 @@ const ExpensesPage = () => {
   return (
     <div className="neu-container space-y-6">
       {/* Header */}
-      <PageHeader 
+      <PageHeader
         title="Expenses"
         subtitle="Track and manage your business expenses."
         actionLabel="Add Expense"
@@ -115,19 +115,19 @@ const ExpensesPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Total Expenses"
           value={formatAmount(stats.totalExpenses)}
           iconBg="#ef4444"
         />
-        <StatCard 
+        <StatCard
           icon={Calendar}
           title="This Month"
           value={formatAmount(stats.thisMonth)}
           iconBg="#f97316"
         />
-        <StatCard 
+        <StatCard
           icon={TrendingDown}
           title="Tax Deductible"
           value={formatAmount(stats.taxDeductible)}
@@ -146,9 +146,8 @@ const ExpensesPage = () => {
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                filterCategory === cat ? 'neu-button-primary' : 'neu-button'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filterCategory === cat ? 'neu-button-primary' : 'neu-button'
+                }`}
             >
               {cat === 'all' ? 'All' : cat}
             </button>
@@ -187,7 +186,7 @@ const ExpensesPage = () => {
               </thead>
               <tbody>
                 {filteredExpenses.map((expense, index) => (
-                  <tr 
+                  <tr
                     key={expense._id}
                     style={{ borderBottom: index < filteredExpenses.length - 1 ? '1px solid #eef1f6' : 'none' }}
                     className="hover:bg-gray-50 transition-colors"
@@ -199,7 +198,7 @@ const ExpensesPage = () => {
                       {expense.description}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 rounded-lg text-xs font-medium" 
+                      <span className="px-2 py-1 rounded-lg text-xs font-medium"
                         style={{ backgroundColor: '#eef1f6', color: '#4A5FFF' }}>
                         {expense.category}
                       </span>

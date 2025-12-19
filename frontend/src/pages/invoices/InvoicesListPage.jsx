@@ -14,7 +14,7 @@ import NeuButton from "../../components/ui/NeuButton";
 import StatCard from "../../components/ui/StatCard";
 import PageHeader from "../../components/ui/PageHeader";
 import { getInvoices } from "../../api/invoiceApi";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import '../../styles/global/neumorphism.css';
 
 const InvoicesListPage = () => {
@@ -62,7 +62,7 @@ const InvoicesListPage = () => {
       (invoice.clientId?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || 
+      statusFilter === "all" ||
       invoice.status.toLowerCase() === statusFilter.toLowerCase();
 
     return matchesSearch && matchesStatus;
@@ -97,7 +97,7 @@ const InvoicesListPage = () => {
   return (
     <div className="neu-container space-y-6">
       {/* Header */}
-      <PageHeader 
+      <PageHeader
         title="Invoices"
         subtitle="Manage all client invoices in one place."
         actionLabel="Create Invoice"
@@ -107,19 +107,19 @@ const InvoicesListPage = () => {
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
+        <StatCard
           icon={FileText}
           title="Total Invoices"
           value={totalInvoices}
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={CheckCircle}
           title="Paid Invoices"
           value={paidInvoices}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Outstanding Amount"
           value={formatAmount(outstandingAmount)}
@@ -132,7 +132,7 @@ const InvoicesListPage = () => {
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
-            <NeuInput 
+            <NeuInput
               icon={Search}
               placeholder="Search by invoice number or client name..."
               value={searchTerm}

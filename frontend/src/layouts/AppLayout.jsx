@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/sidebar/Sidebar';
 import Topbar from '../components/topbar/Topbar';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const AppLayout = ({ children }) => {
   const navigate = useNavigate();

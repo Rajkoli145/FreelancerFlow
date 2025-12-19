@@ -9,7 +9,7 @@ import NeuInput from '../../components/ui/NeuInput';
 import NeuButton from '../../components/ui/NeuButton';
 import StatCard from '../../components/ui/StatCard';
 import PageHeader from '../../components/ui/PageHeader';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import '../../styles/global/neumorphism.css';
 
 const ClientsListPage = () => {
@@ -86,7 +86,7 @@ const ClientsListPage = () => {
   return (
     <div className="neu-container space-y-6">
       {/* Header */}
-      <PageHeader 
+      <PageHeader
         title="Clients"
         subtitle="Manage your client relationships, billing details, and contact info."
         actionLabel="Add Client"
@@ -103,19 +103,19 @@ const ClientsListPage = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
+        <StatCard
           icon={Users}
           title="Total Clients"
           value={totalClients}
           iconBg="#4A5FFF"
         />
-        <StatCard 
+        <StatCard
           icon={UserCheck}
           title="Active Clients"
           value={activeClients}
           iconBg="#22c55e"
         />
-        <StatCard 
+        <StatCard
           icon={DollarSign}
           title="Outstanding Amount"
           value={formatAmount(outstandingAmount)}
@@ -128,7 +128,7 @@ const ClientsListPage = () => {
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
-            <NeuInput 
+            <NeuInput
               icon={Search}
               placeholder="Search by name or email..."
               value={searchTerm}

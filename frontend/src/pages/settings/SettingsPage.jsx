@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User, Camera, Mail, DollarSign, Lock, Bell, Moon, FileText } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import { getMe, updateProfile, updatePassword } from "../../api/authApi";
 import { getCurrencySymbol, CURRENCY_OPTIONS } from "../../utils/formatCurrency";
 import Loader from "../../components/ui/Loader";
@@ -102,7 +102,7 @@ const SettingsPage = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          
+
           // Resize if too large (max 500px)
           const maxSize = 500;
           if (width > height && width > maxSize) {
@@ -112,13 +112,13 @@ const SettingsPage = () => {
             width = (width * maxSize) / height;
             height = maxSize;
           }
-          
+
           canvas.width = width;
           canvas.height = height;
-          
+
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          
+
           // Convert to base64 with compression (0.8 quality)
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
           setAvatarPreview(compressedBase64);
@@ -134,7 +134,7 @@ const SettingsPage = () => {
       setSavingProfile(true);
       setError(null);
       setSuccessMessage("");
-      
+
       const updateData = {
         fullName: profileData.fullName,
         email: profileData.email,
@@ -142,15 +142,15 @@ const SettingsPage = () => {
         currency: profileData.currency,
         ...(avatarPreview && { profilePicture: avatarPreview })
       };
-      
+
       const response = await updateProfile(updateData);
       const updatedUser = response.data || response.user || response;
-      
+
       // Update AuthContext user
       if (setUser) {
         setUser(updatedUser);
       }
-      
+
       setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
@@ -182,12 +182,12 @@ const SettingsPage = () => {
       setPasswordError("");
       setError(null);
       setSuccessMessage("");
-      
+
       await updatePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
-      
+
       setSuccessMessage("Password updated successfully!");
       setPasswordData({
         currentPassword: "",
@@ -251,10 +251,10 @@ const SettingsPage = () => {
         <div className="flex items-center gap-10">
           {/* Avatar Container */}
           <div className="relative" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))' }}>
-            <div 
+            <div
               className="rounded-full overflow-hidden"
-              style={{ 
-                width: '120px', 
+              style={{
+                width: '120px',
                 height: '120px',
                 background: avatarPreview ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 boxShadow: '8px 8px 16px #c9ced6, -8px -8px 16px #ffffff',
@@ -270,12 +270,12 @@ const SettingsPage = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Camera Badge */}
             <label
               htmlFor="avatar-upload"
               className="absolute rounded-full cursor-pointer transition-all duration-200"
-              style={{ 
+              style={{
                 width: '46px',
                 height: '46px',
                 bottom: '4px',
@@ -319,9 +319,9 @@ const SettingsPage = () => {
             <p className="text-sm mb-4" style={{ color: '#6b7280' }}>
               Freelance Professional
             </p>
-            
-            <label 
-              htmlFor="avatar-upload" 
+
+            <label
+              htmlFor="avatar-upload"
               className="inline-flex items-center gap-2 rounded-xl font-medium text-sm cursor-pointer transition-all duration-200"
               style={{
                 padding: '0.75rem 1.5rem',
@@ -354,7 +354,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium neu-text mb-2">
               Full Name *
             </label>
-            <NeuInput 
+            <NeuInput
               icon={User}
               type="text"
               value={profileData.fullName}
@@ -367,7 +367,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium neu-text mb-2">
               Email Address *
             </label>
-            <NeuInput 
+            <NeuInput
               icon={Mail}
               type="email"
               value={profileData.email}
@@ -383,7 +383,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium neu-text mb-2">
               Default Hourly Rate ({getCurrencySymbol(profileData.currency)})
             </label>
-            <NeuInput 
+            <NeuInput
               icon={DollarSign}
               type="number"
               value={profileData.hourlyRate}
@@ -417,7 +417,7 @@ const SettingsPage = () => {
         </div>
 
         <div className="flex justify-end pt-4" style={{ borderTop: '1px solid var(--neu-dark)' }}>
-          <NeuButton 
+          <NeuButton
             variant="primary"
             onClick={handleSaveProfile}
             disabled={savingProfile}
@@ -451,15 +451,13 @@ const SettingsPage = () => {
             </div>
             <button
               onClick={() => handleAccountToggle("emailNotifications")}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                accountSettings.emailNotifications ? "" : ""
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${accountSettings.emailNotifications ? "" : ""
+                }`}
               style={{ backgroundColor: accountSettings.emailNotifications ? 'var(--neu-primary)' : '#d1d9e6', boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)' }}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  accountSettings.emailNotifications ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${accountSettings.emailNotifications ? "translate-x-6" : "translate-x-1"
+                  }`}
                 style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
               />
             </button>
@@ -480,9 +478,8 @@ const SettingsPage = () => {
               style={{ backgroundColor: accountSettings.darkMode ? 'var(--neu-primary)' : '#d1d9e6', boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)' }}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  accountSettings.darkMode ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${accountSettings.darkMode ? "translate-x-6" : "translate-x-1"
+                  }`}
                 style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
               />
             </button>
@@ -503,9 +500,8 @@ const SettingsPage = () => {
               style={{ backgroundColor: accountSettings.weeklyEmails ? 'var(--neu-primary)' : '#d1d9e6', boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)' }}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  accountSettings.weeklyEmails ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${accountSettings.weeklyEmails ? "translate-x-6" : "translate-x-1"
+                  }`}
                 style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
               />
             </button>
@@ -530,7 +526,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium neu-text mb-2">
               Current Password *
             </label>
-            <NeuInput 
+            <NeuInput
               icon={Lock}
               type="password"
               value={passwordData.currentPassword}
@@ -545,7 +541,7 @@ const SettingsPage = () => {
               <label className="block text-sm font-medium neu-text mb-2">
                 New Password *
               </label>
-              <NeuInput 
+              <NeuInput
                 icon={Lock}
                 type="password"
                 value={passwordData.newPassword}
@@ -560,7 +556,7 @@ const SettingsPage = () => {
               <label className="block text-sm font-medium neu-text mb-2">
                 Confirm New Password *
               </label>
-              <NeuInput 
+              <NeuInput
                 icon={Lock}
                 type="password"
                 value={passwordData.confirmPassword}
@@ -582,7 +578,7 @@ const SettingsPage = () => {
           )}
 
           <div className="flex justify-end pt-4" style={{ borderTop: '1px solid var(--neu-dark)' }}>
-            <NeuButton 
+            <NeuButton
               variant="primary"
               type="submit"
               disabled={updatingPassword}

@@ -27,7 +27,7 @@ import {
 import StatCard from '../../components/ui/StatCard';
 import Loader from '../../components/ui/Loader';
 import SkeletonLoader from '../../components/ui/SkeletonLoader';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { getDashboardStats } from '../../api/dashboardApi';
 import '../../styles/global/neumorphism.css';
 

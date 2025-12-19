@@ -41,7 +41,17 @@ const allowedOrigins = [
   'https://freelancer-flow-seven.vercel.app'
 ];
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    const allowedSubdomain = /\.vercel\.app$/;
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedSubdomain.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 }));

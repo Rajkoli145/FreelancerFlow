@@ -3,7 +3,7 @@ import { Eye, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ClientAvatar from './ClientAvatar';
 import ClientStatusBadge from './ClientStatusBadge';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import '../../styles/global/neumorphism.css';
 
 export default function ClientRow({ client }) {

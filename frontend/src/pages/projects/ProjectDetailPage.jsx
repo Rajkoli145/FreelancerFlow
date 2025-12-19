@@ -9,7 +9,7 @@ import InvoiceTable from '../../components/projects/InvoiceTable';
 import { getProjectById, getProjectStatsById } from '../../api/projectApi';
 import { getTimeLogs } from '../../api/timeApi';
 import { getInvoices } from '../../api/invoiceApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const ProjectDetailPage = () => {
   const { id } = useParams();
@@ -32,7 +32,7 @@ const ProjectDetailPage = () => {
     const fetchProjectData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch project details
         const projectResponse = await getProjectById(id);
@@ -141,8 +141,8 @@ const ProjectDetailPage = () => {
             <span className="text-sm text-gray-600">{stats.totalHours?.toFixed(1) || '0.0'}h logged</span>
           </div>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="flex items-center gap-2"
           onClick={() => navigate(`/projects/${id}/edit`)}
         >
@@ -229,16 +229,16 @@ const ProjectDetailPage = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pb-6">
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           className="flex items-center gap-2"
           onClick={() => navigate(`/time/new?projectId=${id}`)}
         >
           <Clock className="w-4 h-4" />
           Add Time Entry
         </Button>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           className="flex items-center gap-2"
           onClick={() => navigate(`/invoices/new?projectId=${id}`)}
         >

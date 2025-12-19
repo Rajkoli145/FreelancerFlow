@@ -7,7 +7,7 @@ import { createInvoice } from "../../api/invoiceApi";
 import { getClients } from "../../api/clientApi";
 import { getProjects } from "../../api/projectApi";
 import { getUnbilledTimeLogs } from "../../api/timeApi";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { getCurrencySymbol } from '../../utils/formatCurrency';
 import '../../styles/global/neumorphism.css';
 
@@ -21,7 +21,7 @@ const CreateInvoicePage = () => {
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [loadingProjects, setLoadingProjects] = useState(true);
-  
+
   const [selectedClient, setSelectedClient] = useState(searchParams.get('clientId') || "");
   const [selectedProject, setSelectedProject] = useState(searchParams.get('projectId') || "");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -72,7 +72,7 @@ const CreateInvoicePage = () => {
     if (selectedClient) {
       const filtered = projects.filter(p => p.clientId?._id === selectedClient || p.clientId === selectedClient);
       setFilteredProjects(filtered);
-      
+
       // Reset project if it doesn't belong to selected client
       if (selectedProject) {
         const projectBelongsToClient = filtered.some(p => p._id === selectedProject);
@@ -80,7 +80,7 @@ const CreateInvoicePage = () => {
           setSelectedProject("");
         }
       }
-      
+
       // Auto-fill currency from selected client
       const selectedClientData = clients.find(c => (c._id || c.id) === selectedClient);
       if (selectedClientData && selectedClientData.currency) {
@@ -127,10 +127,10 @@ const CreateInvoicePage = () => {
     try {
       setLoadingUnbilled(true);
       setError(null);
-      
+
       const response = await getUnbilledTimeLogs(selectedProject);
       const unbilledLogs = response.data || [];
-      
+
       if (unbilledLogs.length === 0) {
         setError('No unbilled time logs found for this project');
         return;
@@ -150,7 +150,7 @@ const CreateInvoicePage = () => {
       }));
 
       setLineItems(newItems);
-      
+
     } catch (err) {
       console.error('Error fetching unbilled time logs:', err);
       setError('Failed to load unbilled time logs');
@@ -263,7 +263,7 @@ const CreateInvoicePage = () => {
           <h2 className="text-lg font-semibold neu-heading pb-3" style={{ borderBottom: '1px solid var(--neu-dark)' }}>
             Invoice Details
           </h2>
-          
+
           {/* Client and Project Selection */}
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -390,8 +390,8 @@ const CreateInvoicePage = () => {
               </div>
             </div>
             <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
-              {lateFeeType === 'percentage' 
-                ? 'Daily percentage of invoice total after due date' 
+              {lateFeeType === 'percentage'
+                ? 'Daily percentage of invoice total after due date'
                 : 'Fixed daily charge after due date'}
             </p>
           </div>
@@ -425,7 +425,7 @@ const CreateInvoicePage = () => {
             <h2 className="text-lg font-semibold neu-heading">
               Line Items
             </h2>
-            
+
             {/* Generate from Unbilled Hours Button */}
             {selectedProject && (
               <NeuButton
@@ -441,120 +441,120 @@ const CreateInvoicePage = () => {
           </div>
 
           <div className="neu-card-inset rounded-xl overflow-hidden">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 px-4 py-3 text-sm font-semibold neu-text" style={{ 
-                borderBottom: '1px solid var(--neu-dark)',
-                backgroundColor: 'rgba(201, 206, 214, 0.1)'
-              }}>
-                <div className="col-span-5">Description</div>
-                <div className="col-span-2 text-right">Quantity/Hours</div>
-                <div className="col-span-2 text-right">Rate</div>
-                <div className="col-span-2 text-right">Amount</div>
-                <div className="col-span-1"></div>
-              </div>
-
-              {/* Line Items Rows */}
-              {lineItems.map((item, index) => {
-                const amount = (parseFloat(item.quantity) || parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-12 gap-4 px-4 py-3 items-center"
-                    style={{ 
-                      borderBottom: index === lineItems.length - 1 ? 'none' : '1px solid rgba(201, 206, 214, 0.2)'
-                    }}
-                  >
-                    <div className="col-span-5">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) =>
-                          updateLineItem(item.id, "description", e.target.value)
-                        }
-                        placeholder="e.g., UI Design"
-                        className="neu-input w-full text-sm"
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <input
-                        type="number"
-                        value={item.quantity || item.hours}
-                        onChange={(e) =>
-                          updateLineItem(item.id, "quantity", e.target.value)
-                        }
-                        placeholder="0"
-                        min="0"
-                        step="0.5"
-                        className="neu-input w-full text-sm text-right"
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <input
-                        type="number"
-                        value={item.rate}
-                        onChange={(e) =>
-                          updateLineItem(item.id, "rate", e.target.value)
-                        }
-                        placeholder="0"
-                        min="0"
-                        className="neu-input w-full text-sm text-right"
-                      />
-                    </div>
-
-                    <div className="col-span-2 text-right font-medium neu-text">
-                      {getCurrencySymbol(currency)}{amount.toLocaleString()}
-                    </div>
-
-                    <div className="col-span-1 flex justify-end">
-                      <button
-                        onClick={() => removeLineItem(item.id)}
-                        className="p-1.5 rounded-lg transition-all duration-200"
-                        style={{ 
-                          color: lineItems.length === 1 ? '#9ca3af' : '#ef4444',
-                          boxShadow: '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff'
-                        }}
-                        disabled={lineItems.length === 1}
-                        onMouseDown={(e) => {
-                          if (lineItems.length > 1) {
-                            e.currentTarget.style.transform = 'scale(0.95)';
-                            e.currentTarget.style.boxShadow = 'inset 2px 2px 4px #c9ced6, inset -2px -2px 4px #ffffff';
-                          }
-                        }}
-                        onMouseUp={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.boxShadow = '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.boxShadow = '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff';
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 text-sm font-semibold neu-text" style={{
+              borderBottom: '1px solid var(--neu-dark)',
+              backgroundColor: 'rgba(201, 206, 214, 0.1)'
+            }}>
+              <div className="col-span-5">Description</div>
+              <div className="col-span-2 text-right">Quantity/Hours</div>
+              <div className="col-span-2 text-right">Rate</div>
+              <div className="col-span-2 text-right">Amount</div>
+              <div className="col-span-1"></div>
             </div>
 
-            {/* Add Line Item Button */}
-            <NeuButton
-              variant="default"
-              onClick={addLineItem}
-              className="flex items-center gap-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add Line Item
-            </NeuButton>
+            {/* Line Items Rows */}
+            {lineItems.map((item, index) => {
+              const amount = (parseFloat(item.quantity) || parseFloat(item.hours) || 0) * (parseFloat(item.rate) || 0);
+
+              return (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-12 gap-4 px-4 py-3 items-center"
+                  style={{
+                    borderBottom: index === lineItems.length - 1 ? 'none' : '1px solid rgba(201, 206, 214, 0.2)'
+                  }}
+                >
+                  <div className="col-span-5">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) =>
+                        updateLineItem(item.id, "description", e.target.value)
+                      }
+                      placeholder="e.g., UI Design"
+                      className="neu-input w-full text-sm"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      value={item.quantity || item.hours}
+                      onChange={(e) =>
+                        updateLineItem(item.id, "quantity", e.target.value)
+                      }
+                      placeholder="0"
+                      min="0"
+                      step="0.5"
+                      className="neu-input w-full text-sm text-right"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      value={item.rate}
+                      onChange={(e) =>
+                        updateLineItem(item.id, "rate", e.target.value)
+                      }
+                      placeholder="0"
+                      min="0"
+                      className="neu-input w-full text-sm text-right"
+                    />
+                  </div>
+
+                  <div className="col-span-2 text-right font-medium neu-text">
+                    {getCurrencySymbol(currency)}{amount.toLocaleString()}
+                  </div>
+
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      onClick={() => removeLineItem(item.id)}
+                      className="p-1.5 rounded-lg transition-all duration-200"
+                      style={{
+                        color: lineItems.length === 1 ? '#9ca3af' : '#ef4444',
+                        boxShadow: '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff'
+                      }}
+                      disabled={lineItems.length === 1}
+                      onMouseDown={(e) => {
+                        if (lineItems.length > 1) {
+                          e.currentTarget.style.transform = 'scale(0.95)';
+                          e.currentTarget.style.boxShadow = 'inset 2px 2px 4px #c9ced6, inset -2px -2px 4px #ffffff';
+                        }
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '3px 3px 6px #c9ced6, -3px -3px 6px #ffffff';
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add Line Item Button */}
+          <NeuButton
+            variant="default"
+            onClick={addLineItem}
+            className="flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Line Item
+          </NeuButton>
         </div>
 
         {/* Total Summary Card */}
         <div className="neu-card">
           <h3 className="text-sm font-semibold neu-text mb-4">Invoice Summary</h3>
-          
+
           {/* Tax and Discount Inputs */}
           <div className="grid grid-cols-2 gap-6 mb-6 pb-6" style={{ borderBottom: '1px solid var(--neu-dark)' }}>
             <div>
