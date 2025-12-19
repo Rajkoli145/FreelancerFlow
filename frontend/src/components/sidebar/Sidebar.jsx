@@ -18,7 +18,7 @@ import { getInvoiceStats } from '../../api/invoiceApi';
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { logout, user } = useAuth();
   const [invoiceBadge, setInvoiceBadge] = useState(null);
 
   // Fetch invoice stats for badge
@@ -47,6 +47,7 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     console.log('Logging out...');
+    logout();
     navigate('/login');
   };
 
