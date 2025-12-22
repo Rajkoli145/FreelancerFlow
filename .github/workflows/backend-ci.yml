@@ -33,7 +33,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./backend
-      run: npm ci
+      run: npm install
 
     - name: Run linter
       working-directory: ./backend
@@ -41,7 +41,7 @@ jobs:
 
     - name: Run tests
       working-directory: ./backend
-      run: npm run test:ci
+      run: npm run test:ci -- --runInBand
       env:
         NODE_ENV: test
         MONGO_URI: mongodb://localhost:27017/test
