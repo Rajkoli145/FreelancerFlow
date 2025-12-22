@@ -81,23 +81,6 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Data sanitization against NoSQL query injection
-if (config.nodeEnv !== 'test') {
-  app.use(mongoSanitize());
-}
-
-// Data sanitization against XSS
-if (config.nodeEnv !== 'test') {
-  app.use(xss());
-}
-
-// Prevent HTTP Parameter Pollution
-if (config.nodeEnv !== 'test') {
-  app.use(hpp({
-    whitelist: ['status', 'billingType', 'category'] // Allow duplicate params for filters
-  }));
-}
-
 // ========== 3. RATE LIMITING ==========
 
 // Auth routes - stricter limits
@@ -139,6 +122,25 @@ const generalLimiter = config.nodeEnv === 'test' ? (req, res, next) => next() : 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 app.use(cookieParser());
+
+// ========== 5. DATA SANITIZATION ==========
+
+// Data sanitization against NoSQL query injection
+// if (config.nodeEnv !== 'test') {
+//   app.use(mongoSanitize());
+// }
+
+// Data sanitization against XSS
+// if (config.nodeEnv !== 'test') {
+//   app.use(xss());
+// }
+
+// Prevent HTTP Parameter Pollution
+// if (config.nodeEnv !== 'test') {
+//   app.use(hpp({
+//     whitelist: ['status', 'billingType', 'category'] // Allow duplicate params for filters
+//   }));
+// }
 
 // HTTP request logging
 if (config.nodeEnv === 'development') {
