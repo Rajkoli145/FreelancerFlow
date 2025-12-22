@@ -15,8 +15,15 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --coverage --verbose",
+    "test:watch": "jest --watch",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:ci": "jest --coverage --ci --maxWorkers=2",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -24,16 +31,34 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
     "firebase-admin": "^13.6.0",
     "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "morgan": "^1.10.1",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-security": "^3.0.1",
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^11.0.0",
+    "nodemon": "^3.1.11",
+    "supertest": "^7.1.4"
   }
 }

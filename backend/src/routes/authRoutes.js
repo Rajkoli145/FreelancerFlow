@@ -1,46 +1,26 @@
 const express = require("express");
-const {body} = require("express-validator");
 const router = express.Router();
 const { signup, login, getMe, updateProfile, updatePassword } = require('../controllers/authController');
-// const { firebaseAuth } = require('../controllers/firebaseAuthController');
-
 const { protect } = require('../middleware/authMiddleware');
-
+const { validate } = require('../middleware/validateMiddleware');
 
 // Signup route
-router.post(
-  "/signup",
-  [
-    body("fullName").not().isEmpty().withMessage("Full name is required"),
-    body("email").isEmail().withMessage("Valid email is required"),
-    body("password")
-      .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters long"),
-  ],
-  signup
-);
+router.post("/signup", validate('signup'), signup);
 
 // Login route
-router.post(
-  "/login",
-  [
-    body("email").isEmail().withMessage("Valid email is required"),
-    body("password").not().isEmpty().withMessage("Password is required"),
-  ],
-  login
-);
+router.post("/login", validate('login'), login);
 
 
 // // Firebase OAuth route
 // router.post('/firebase', firebaseAuth);
 
 // Get current user
-router.get('/me', protect, getMe); 
+router.get('/me', protect, getMe);
 
 // Update profile
-router.put('/profile', protect, updateProfile);
+router.put('/profile', protect, validate('updateProfile'), updateProfile);
 
 // Update password
-router.put('/password', protect, updatePassword);
+router.put('/password', protect, validate('updatePassword'), updatePassword);
 
 module.exports = router;

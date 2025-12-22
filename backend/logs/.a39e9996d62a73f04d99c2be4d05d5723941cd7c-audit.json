@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/rajkoli/Downloads/FreelancerFlow-main/backend/logs/.a39e9996d62a73f04d99c2be4d05d5723941cd7c-audit.json",
+    "files": [
+        {
+            "date": 1766410746585,
+            "name": "/Users/rajkoli/Downloads/FreelancerFlow-main/backend/logs/exceptions-2025-12-22.log",
+            "hash": "08ce61e14c9d8d309a612c6df434e1233ff5724a987f26db519da558ae0f710a"
+        }
+    ],
+    "hashType": "sha256"
+}
