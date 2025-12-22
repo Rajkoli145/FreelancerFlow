@@ -11,6 +11,7 @@ const morgan = require('morgan');
 const config = require('./config/config');
 const logger = require('./utils/logger');
 const connectDB = require('./config/db');
+const { initializeFirebase } = require('./config/firebase');
 const setupSwagger = require('./config/swagger');
 
 // Import routes
@@ -34,9 +35,10 @@ const app = express();
 // Trust proxy - required for rate limiting behind reverse proxies
 app.set('trust proxy', 1);
 
-// ========== 1. CONNECT TO DATABASE ==========
+// ========== 1. CONNECT TO DATABASE & EXTERNAL SERVICES ==========
 if (config.nodeEnv !== 'test') {
   connectDB();
+  initializeFirebase();
 }
 
 // ========== 2. SECURITY MIDDLEWARE ==========

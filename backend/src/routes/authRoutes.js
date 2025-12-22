@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { signup, login, getMe, updateProfile, updatePassword } = require('../controllers/authController');
+const { firebaseAuth } = require('../controllers/firebaseAuthController');
 const { protect } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validateMiddleware');
 
@@ -10,9 +11,8 @@ router.post("/signup", validate('signup'), signup);
 // Login route
 router.post("/login", validate('login'), login);
 
-
-// // Firebase OAuth route
-// router.post('/firebase', firebaseAuth);
+// Firebase OAuth route (Google, GitHub)
+router.post('/firebase', firebaseAuth);
 
 // Get current user
 router.get('/me', protect, getMe);

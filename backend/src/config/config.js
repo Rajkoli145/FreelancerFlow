@@ -54,6 +54,11 @@ const config = {
   // Security
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 10,
 
+  // Firebase
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+  firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined,
+
   // Feature Flags
   enableSwagger: process.env.ENABLE_SWAGGER === 'true',
 };

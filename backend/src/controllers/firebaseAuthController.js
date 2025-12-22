@@ -1,47 +1,76 @@
 const admin = require('firebase-admin');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const { generateToken } = require('../utils/generateToken');
+const { jwtSecret, jwtExpire } = require('../config/config');
+const { catchAsync } = require('../middleware/errorMiddleware');
+const { AuthenticationError } = require('../utils/errors');
 
-exports.firebaseAuth = async (req, res) => {
-  const { authorization } = req.headers;
+/**
+ * Single endpoint to handle Firebase OAuth tokens (Google, GitHub, etc.)
+ */
+const firebaseAuth = catchAsync(async (req, res, next) => {
+  const { token: idToken } = req.body;
 
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: Missing or invalid token' });
+  if (!idToken) {
+    throw new AuthenticationError('Firebase ID Token is required');
   }
 
-  const idToken = authorization.split('Bearer ')[1];
-
   try {
+    // Verify the token with Firebase
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const { uid, email, name, picture } = decodedToken;
+    const { uid, email, name, picture, firebase } = decodedToken;
+    const provider = firebase?.sign_in_provider || 'google.com';
 
-    let user = await User.findOne({ email });
+    // Map firebase provider to our authProvider enum
+    let authProvider = 'google';
+    if (provider.includes('github')) authProvider = 'github';
+
+    // Find or create user
+    let user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      user = new User({
-        firebaseUID: uid,
-        email,
-        fullName: name,
+      user = await User.create({
+        fullName: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        firebaseUid: uid,
+        authProvider,
         profilePhoto: picture,
-        // Set a default hourly rate or other fields as needed
         defaultHourlyRate: 0,
+        passwordHash: undefined // Explicitly no password for OAuth users
       });
-      await user.save();
+    } else {
+      // Update existing user with firebase info if not already present
+      if (!user.firebaseUid) {
+        user.firebaseUid = uid;
+        user.authProvider = authProvider;
+        if (picture) user.profilePhoto = picture;
+        await user.save();
+      }
     }
 
-    const token = generateToken(user._id);
+    // Generate our own JWT for the user
+    const appToken = jwt.sign({ id: user._id }, jwtSecret, {
+      expiresIn: jwtExpire,
+    });
 
     res.status(200).json({
-      token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        profilePhoto: user.profilePhoto,
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          profilePhoto: user.profilePhoto,
+          role: user.role,
+          authProvider: user.authProvider
+        },
+        token: appToken,
       },
     });
   } catch (error) {
-    console.error('Token verification failed:', error);
-    res.status(401).json({ message: 'Unauthorized: Token verification failed' });
+    console.error('Firebase Auth Error:', error);
+    throw new AuthenticationError('Authentication failed: ' + error.message);
   }
-};
+});
+
+module.exports = { firebaseAuth };

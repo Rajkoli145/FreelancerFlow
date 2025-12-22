@@ -14,7 +14,7 @@ A production-ready, enterprise-grade REST API for freelancers to manage clients,
 ## 🚀 Features
 
 ### Core Functionality
-- ✅ **Authentication & Authorization** - JWT-based auth with role-based access control
+- ✅ **Authentication & Authorization** - JWT-based auth with Role-Based Access Control and **Firebase Social Auth (Google/GitHub)** support.
 - ✅ **Client Management** - Full CRUD operations for client data
 - ✅ **Project Tracking** - Hourly and fixed-price billing support
 - ✅ **Time Logging** - Track billable and non-billable hours
@@ -318,6 +318,7 @@ Logs are stored in `logs/` directory:
 - `GET /api/auth/me` - Get current user
 - `PUT /api/auth/profile` - Update profile
 - `PUT /api/auth/password` - Change password
+- `POST /api/auth/firebase` - Login/Signup with Firebase OAuth (Google/GitHub)
 
 ### Clients
 - `GET /api/client` - List all clients
