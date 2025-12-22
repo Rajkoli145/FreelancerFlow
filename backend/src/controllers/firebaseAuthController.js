@@ -6,7 +6,46 @@ const { catchAsync } = require('../middleware/errorMiddleware');
 const { AuthenticationError } = require('../utils/errors');
 
 /**
- * Single endpoint to handle Firebase OAuth tokens (Google, GitHub, etc.)
+ * @swagger
+ * /api/auth/firebase:
+ *   post:
+ *     summary: Login or Signup with Firebase OAuth (Google, GitHub)
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application: json
+ *         schema:
+ *           type: object
+ *           required:
+ *             - token
+ *           properties:
+ *             token:
+ *               type: string
+ *               description: Firebase ID Token obtained from frontend
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application: json
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *               data:
+ *                 type: object
+ *                 properties:
+ *                   user:
+ *                     $ref: '#/components/schemas/User'
+ *                   token:
+ *                     type: string
+ *       401:
+ *         description: Authentication failed
+ *         content:
+ *           application: json
+ *           schema:
+ *             $ref: '#/components/schemas/Error'
  */
 const firebaseAuth = catchAsync(async (req, res, next) => {
   const { token: idToken } = req.body;
