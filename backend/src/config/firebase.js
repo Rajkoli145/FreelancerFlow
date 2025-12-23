@@ -13,7 +13,7 @@ const initializeFirebase = () => {
             credential: admin.credential.cert({
                 projectId: config.firebaseProjectId,
                 clientEmail: config.firebaseClientEmail,
-                privateKey: config.firebasePrivateKey,
+                privateKey: config.firebasePrivateKey.replace(/\\n/g, '\n'),
             }),
         });
 
