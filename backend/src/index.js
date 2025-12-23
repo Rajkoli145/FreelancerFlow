@@ -45,7 +45,7 @@ if (config.nodeEnv !== 'test') {
 
 // Set security HTTP headers
 app.use(helmet({
-  crossOriginOpenerPolicy: false,
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],

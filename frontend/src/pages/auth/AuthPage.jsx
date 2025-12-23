@@ -24,8 +24,16 @@ const AuthPage = () => {
   useEffect(() => {
     const handleRedirect = async () => {
       console.log('AuthPage: Checking for Firebase redirect result...');
+
+      // Set a safety timeout to stop loading if Firebase hangs
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+      }, 10000);
+
       try {
         const result = await getRedirectResult(auth);
+        clearTimeout(timeoutId);
+
         if (result) {
           console.log('AuthPage: Redirect result found, authenticating with backend...');
           setLoading(true);
@@ -41,6 +49,7 @@ const AuthPage = () => {
           console.log('AuthPage: No redirect result found.');
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('AuthPage: Redirect result error:', error);
         setErrors({ general: `Authentication error: ${error.message}` });
       } finally {
