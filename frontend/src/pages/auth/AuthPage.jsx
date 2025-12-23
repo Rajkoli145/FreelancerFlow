@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Github, Linkedin } from 'lucide-react';
-import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../../config/firebase';
 import axiosInstance from '../../api/axioInstance';
 import './auth.css';
@@ -21,43 +21,6 @@ const AuthPage = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      console.log('AuthPage: Checking for Firebase redirect result...');
-
-      // Set a safety timeout to stop loading if Firebase hangs
-      const timeoutId = setTimeout(() => {
-        setLoading(false);
-      }, 10000);
-
-      try {
-        const result = await getRedirectResult(auth);
-        clearTimeout(timeoutId);
-
-        if (result) {
-          console.log('AuthPage: Redirect result found, authenticating with backend...');
-          setLoading(true);
-          const idToken = await result.user.getIdToken();
-          const res = await socialLogin(idToken);
-          console.log('AuthPage: Social login response:', res);
-          if (res.success) {
-            navigate(res.user?.role === 'admin' ? '/admin' : '/dashboard');
-          } else {
-            setErrors({ general: res.error || 'Social login failed' });
-          }
-        } else {
-          console.log('AuthPage: No redirect result found.');
-        }
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('AuthPage: Redirect result error:', error);
-        setErrors({ general: `Authentication error: ${error.message}` });
-      } finally {
-        setLoading(false);
-      }
-    };
-    handleRedirect();
-  }, [auth, socialLogin, navigate]);
 
   const [isSignIn, setIsSignIn] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -203,11 +166,24 @@ const AuthPage = () => {
   const handleSocialLogin = async (provider) => {
     setLoading(true);
     setErrors({});
+    console.log('AuthPage: Starting social login popup...');
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log('AuthPage: Popup success, getting token...');
+      const idToken = await result.user.getIdToken();
+
+      const res = await socialLogin(idToken);
+      console.log('AuthPage: Social login response:', res);
+
+      if (res.success) {
+        navigate(res.user?.role === 'admin' ? '/admin' : '/dashboard');
+      } else {
+        setErrors({ general: res.error || 'Social login failed' });
+      }
     } catch (error) {
-      console.error('Social auth error:', error);
+      console.error('AuthPage: Social auth error:', error);
       setErrors({ general: error.message || 'Social login failed' });
+    } finally {
       setLoading(false);
     }
   };
