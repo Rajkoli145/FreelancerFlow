@@ -23,21 +23,26 @@ const AuthPage = () => {
 
   useEffect(() => {
     const handleRedirect = async () => {
+      console.log('AuthPage: Checking for Firebase redirect result...');
       try {
         const result = await getRedirectResult(auth);
         if (result) {
+          console.log('AuthPage: Redirect result found, authenticating with backend...');
           setLoading(true);
           const idToken = await result.user.getIdToken();
           const res = await socialLogin(idToken);
+          console.log('AuthPage: Social login response:', res);
           if (res.success) {
             navigate(res.user?.role === 'admin' ? '/admin' : '/dashboard');
           } else {
             setErrors({ general: res.error || 'Social login failed' });
           }
+        } else {
+          console.log('AuthPage: No redirect result found.');
         }
       } catch (error) {
-        console.error('Redirect result error:', error);
-        setErrors({ general: error.message });
+        console.error('AuthPage: Redirect result error:', error);
+        setErrors({ general: `Authentication error: ${error.message}` });
       } finally {
         setLoading(false);
       }

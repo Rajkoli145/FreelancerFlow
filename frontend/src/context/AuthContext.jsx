@@ -72,8 +72,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
   const socialLogin = async (firebaseIdToken) => {
+    console.log('AuthContext: Initiating social login with backend...');
     try {
       const response = await loginWithFirebase(firebaseIdToken);
+      console.log('AuthContext: Backend social login response:', response);
 
       if (response.success && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
@@ -82,12 +84,12 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: response.data.user };
       }
 
-      return { success: false, error: 'Social login failed' };
+      return { success: false, error: response.message || 'Social login failed' };
     } catch (error) {
-      console.error('Social login error:', error);
+      console.error('AuthContext: Social login error:', error);
       return {
         success: false,
-        error: error.message || 'Social login failed'
+        error: error.message || 'The server is taking too long to respond. Please try again.'
       };
     }
   };
