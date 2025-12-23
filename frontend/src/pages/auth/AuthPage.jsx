@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Github, Linkedin } from 'lucide-react';
-import { signInWithRedirect } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../../config/firebase';
 import axiosInstance from '../../api/axioInstance';
 import './auth.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { login, signup, isAuthenticated, user } = useAuth();
+  const { login, signup, socialLogin, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -162,6 +162,31 @@ const AuthPage = () => {
   };
 
 
+  const handleSocialLogin = async (provider) => {
+    setLoading(true);
+    setErrors({});
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+
+      const res = await socialLogin(idToken);
+
+      if (res.success) {
+        if (res.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setErrors({ general: res.error || 'Social login failed' });
+      }
+    } catch (error) {
+      console.error('Social auth error:', error);
+      setErrors({ general: error.message || 'Social login failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="auth-page">
@@ -177,7 +202,8 @@ const AuthPage = () => {
                 type="button"
                 className="form__icon-btn"
                 aria-label="Sign up with Google"
-                disabled
+                onClick={() => handleSocialLogin(googleProvider)}
+                disabled={loading}
               >
                 <svg className="form__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -193,7 +219,8 @@ const AuthPage = () => {
                 type="button"
                 className="form__icon-btn"
                 aria-label="Sign up with GitHub"
-                disabled
+                onClick={() => handleSocialLogin(githubProvider)}
+                disabled={loading}
               >
                 <Github className="form__icon" strokeWidth={1.5} />
               </button>
@@ -262,7 +289,8 @@ const AuthPage = () => {
                 type="button"
                 className="form__icon-btn"
                 aria-label="Sign in with Google"
-                disabled
+                onClick={() => handleSocialLogin(googleProvider)}
+                disabled={loading}
               >
                 <svg className="form__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -278,7 +306,8 @@ const AuthPage = () => {
                 type="button"
                 className="form__icon-btn"
                 aria-label="Sign in with GitHub"
-                disabled
+                onClick={() => handleSocialLogin(githubProvider)}
+                disabled={loading}
               >
                 <Github className="form__icon" strokeWidth={1.5} />
               </button>

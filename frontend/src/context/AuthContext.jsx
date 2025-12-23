@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
-import { login as loginApi, signup as signupApi, getMe } from '../api/authApi';
+import { login as loginApi, signup as signupApi, getMe, loginWithFirebase } from '../api/authApi';
 import { getCurrencySymbol, formatCurrency } from '../utils/formatCurrency';
 import axiosInstance from '../api/axioInstance';
 
@@ -71,6 +71,26 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+  const socialLogin = async (firebaseIdToken) => {
+    try {
+      const response = await loginWithFirebase(firebaseIdToken);
+
+      if (response.success && response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return { success: true, user: response.data.user };
+      }
+
+      return { success: false, error: 'Social login failed' };
+    } catch (error) {
+      console.error('Social login error:', error);
+      return {
+        success: false,
+        error: error.message || 'Social login failed'
+      };
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('authToken');
@@ -91,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     signup,
+    socialLogin,
     logout,
     currencyCode,
     currencySymbol,

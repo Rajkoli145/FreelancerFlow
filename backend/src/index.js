@@ -86,7 +86,7 @@ app.use(cors({
 // Auth routes - stricter limits
 const authLimiter = config.nodeEnv === 'test' ? (req, res, next) => next() : rateLimit({
   windowMs: config.rateLimitWindowMs,
-  max: 5, // 5 requests per window for auth
+  max: config.nodeEnv === 'development' ? 100 : 5, // Lenient in dev, strict in prod
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,

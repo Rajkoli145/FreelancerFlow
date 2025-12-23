@@ -63,3 +63,15 @@ export const updatePassword = async (passwordData) => {
     throw error.response?.data || error;
   }
 };
+/**
+ * User login/signup with Firebase OAuth (Google, GitHub)
+ * @param {string} token - Firebase ID Token
+ */
+export const loginWithFirebase = async (token) => {
+  try {
+    const response = await axiosInstance.post('/auth/firebase', { token });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
