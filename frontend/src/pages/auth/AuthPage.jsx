@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Github, Linkedin } from 'lucide-react';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../../config/firebase';
 import axiosInstance from '../../api/axioInstance';
 import './auth.css';
@@ -20,6 +20,30 @@ const AuthPage = () => {
       }
     }
   }, [isAuthenticated, user, navigate]);
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setLoading(true);
+          const idToken = await result.user.getIdToken();
+          const res = await socialLogin(idToken);
+          if (res.success) {
+            navigate(res.user?.role === 'admin' ? '/admin' : '/dashboard');
+          } else {
+            setErrors({ general: res.error || 'Social login failed' });
+          }
+        }
+      } catch (error) {
+        console.error('Redirect result error:', error);
+        setErrors({ general: error.message });
+      } finally {
+        setLoading(false);
+      }
+    };
+    handleRedirect();
+  }, [auth, socialLogin, navigate]);
 
   const [isSignIn, setIsSignIn] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -166,24 +190,10 @@ const AuthPage = () => {
     setLoading(true);
     setErrors({});
     try {
-      const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-
-      const res = await socialLogin(idToken);
-
-      if (res.success) {
-        if (res.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
-      } else {
-        setErrors({ general: res.error || 'Social login failed' });
-      }
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error('Social auth error:', error);
       setErrors({ general: error.message || 'Social login failed' });
-    } finally {
       setLoading(false);
     }
   };
