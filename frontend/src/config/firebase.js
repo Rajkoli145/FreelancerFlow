@@ -10,14 +10,30 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app = null;
+let auth = null;
+let googleProvider = null;
+let githubProvider = null;
 
-// Initialize Firebase Authentication
-export const auth = getAuth(app);
+const hasFirebaseConfig = firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
 
-// Set up providers
-export const googleProvider = new GoogleAuthProvider();
-export const githubProvider = new GithubAuthProvider();
+if (hasFirebaseConfig) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+    githubProvider = new GithubAuthProvider();
+    console.log("Firebase initialized successfully.");
+  } catch (error) {
+    console.error("Failed to initialize Firebase:", error);
+  }
+} else {
+  console.warn("Firebase configuration is missing. Social login will be disabled.");
+  // Provide mock objects so importing them does not throw ReferenceErrors
+  auth = { app: null };
+  googleProvider = {};
+  githubProvider = {};
+}
 
+export { auth, googleProvider, githubProvider };
 export default app;

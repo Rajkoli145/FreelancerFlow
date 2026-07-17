@@ -168,6 +168,9 @@ const AuthPage = () => {
     setErrors({});
     console.log('AuthPage: Starting social login popup...');
     try {
+      if (!auth || !auth.app) {
+        throw new Error('Social authentication is not configured in this environment.');
+      }
       const result = await signInWithPopup(auth, provider);
       console.log('AuthPage: Popup success, getting token...');
       const idToken = await result.user.getIdToken();
